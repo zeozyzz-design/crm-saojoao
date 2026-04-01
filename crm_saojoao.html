@@ -549,9 +549,20 @@ label:first-child{margin-top:0}
 
       <!-- DASHBOARD -->
       <div id="screen-dash" class="screen">
-        <div style="display:flex;gap:8px;margin-bottom:14px">
-          <select id="dash-vend" onchange="renderDash()" style="max-width:200px"><option value="">Toda a equipe</option></select>
+        <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:flex-end">
+          <select id="dash-vend" onchange="renderDash()" style="max-width:180px"><option value="">Toda a equipe</option></select>
+          <select id="dash-cidade" onchange="renderDash()" style="max-width:180px"><option value="">Todas as cidades</option></select>
+          <div style="display:flex;flex-direction:column;gap:3px">
+            <span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--steel2);text-transform:uppercase;letter-spacing:1px">Data inicial</span>
+            <input type="date" id="dash-data-ini" onchange="renderDash()" style="width:150px;padding:7px 10px;font-size:12px">
+          </div>
+          <div style="display:flex;flex-direction:column;gap:3px">
+            <span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--steel2);text-transform:uppercase;letter-spacing:1px">Data final</span>
+            <input type="date" id="dash-data-fim" onchange="renderDash()" style="width:150px;padding:7px 10px;font-size:12px">
+          </div>
+          <button class="btn btn-sm" onclick="limparFiltrosDash()" style="align-self:flex-end">Limpar filtros</button>
         </div>
+        <div id="dash-filtro-ativo" style="display:none;margin-bottom:10px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--orange);background:var(--orange-dim);border-radius:var(--radius);padding:6px 12px"></div>
         <div class="grid4" id="kpi-cards"></div>
         <div class="grid2" style="margin-bottom:14px">
           <div class="card">
@@ -562,6 +573,10 @@ label:first-child{margin-top:0}
             <div class="card-title">Motivos de perda</div>
             <div id="ch-motivos"></div>
           </div>
+        </div>
+        <div class="card" id="card-dias" style="display:none;margin-bottom:14px">
+          <div class="card-title">Ligações por dia</div>
+          <div id="ch-dias"></div>
         </div>
         <div class="card" style="margin-bottom:14px">
           <div class="card-title">Leads por cidade — top 10</div>
@@ -849,16 +864,76 @@ function renderRanking(){
     </div>`).join('');
 }
 
+function parseBR(d){
+  // converte dd/mm/aaaa → Date comparável
+  if(!d)return null;
+  const p=d.split('/');
+  if(p.length===3)return new Date(p[2],p[1]-1,p[0]);
+  return null;
+}
+function parseISO(d){
+  if(!d)return null;
+  const p=d.split('-');
+  return new Date(p[0],p[1]-1,p[2]);
+}
+function limparFiltrosDash(){
+  document.getElementById('dash-vend').value='';
+  document.getElementById('dash-cidade').value='';
+  document.getElementById('dash-data-ini').value='';
+  document.getElementById('dash-data-fim').value='';
+  renderDash();
+}
+function poblarCidades(){
+  const el=document.getElementById('dash-cidade');
+  if(!el)return;
+  const val=el.value;
+  const cids=[...new Set(db.clientes.map(c=>c.cidade).filter(Boolean))].sort();
+  el.innerHTML='<option value="">Todas as cidades</option>'+cids.map(c=>`<option value="${c}">${c}</option>`).join('');
+  el.value=val;
+}
 function renderDash(){
   poblarSelects();
-  const vend=document.getElementById('dash-vend').value;
-  const clis=vend?db.clientes.filter(c=>c.vendedor===vend):db.clientes;
-  const ids=new Set(clis.map(c=>String(c.id)));
-  const ligs=db.ligacoes.filter(l=>ids.has(String(l.cid)));
-  const total=clis.length;
-  const atendidas=ligs.filter(l=>l.atendeu).length;
-  const fechados=clis.filter(c=>statusUltimo(c.id)==='fechado').length;
-  const taxa=total?Math.round(fechados/total*100):0;
+  poblarCidades();
+
+  const vend   = document.getElementById('dash-vend').value;
+  const cidade = document.getElementById('dash-cidade').value;
+  const dIni   = parseISO(document.getElementById('dash-data-ini').value);
+  const dFim   = parseISO(document.getElementById('dash-data-fim').value);
+
+  // filtro de clientes por vendedor e cidade
+  let clis = db.clientes.filter(c=>{
+    const vOk = !vend   || c.vendedor === vend;
+    const cOk = !cidade || (c.cidade||'').trim() === cidade;
+    return vOk && cOk;
+  });
+  const ids = new Set(clis.map(c=>String(c.id)));
+
+  // filtro de ligações por data
+  let ligs = db.ligacoes.filter(l=>{
+    if(!ids.has(String(l.cid))) return false;
+    if(dIni || dFim){
+      const ld = parseBR(l.data);
+      if(!ld) return false;
+      if(dIni && ld < dIni) return false;
+      if(dFim && ld > dFim) return false;
+    }
+    return true;
+  });
+
+  // badge de filtro ativo
+  const filtros=[];
+  if(vend)   filtros.push('Vendedor: '+vend);
+  if(cidade) filtros.push('Cidade: '+cidade);
+  if(dIni)   filtros.push('De: '+document.getElementById('dash-data-ini').value.split('-').reverse().join('/'));
+  if(dFim)   filtros.push('Até: '+document.getElementById('dash-data-fim').value.split('-').reverse().join('/'));
+  const fb=document.getElementById('dash-filtro-ativo');
+  if(filtros.length){fb.style.display='block';fb.textContent='Filtros ativos: '+filtros.join(' · ');}
+  else{fb.style.display='none';}
+
+  const total    = clis.length;
+  const fechados = ligs.filter(l=>l.resultado==='fechado').length;
+  const atendidas= ligs.filter(l=>l.atendeu).length;
+  const taxa     = ligs.length ? Math.round(fechados/ligs.length*100) : 0;
 
   document.getElementById('kpi-cards').innerHTML=`
     <div class="metric"><div class="metric-val">${total}</div><div class="metric-label">Clientes</div></div>
@@ -866,8 +941,13 @@ function renderDash(){
     <div class="metric green"><div class="metric-val" style="color:var(--green)">${fechados}</div><div class="metric-label">Fechados</div></div>
     <div class="metric accent"><div class="metric-val" style="color:var(--orange)">${taxa}%</div><div class="metric-label">Conversão</div></div>`;
 
+  // status — baseado nas ligações filtradas (último status por cliente)
   const sc={interessado:0,negociacao:0,fechado:0,perdido:0,sem_contato:0};
-  clis.forEach(c=>{const s=statusUltimo(c.id);sc[s]=(sc[s]||0)+1;});
+  clis.forEach(c=>{
+    const ligsCliente=ligs.filter(l=>String(l.cid)===String(c.id)&&l.atendeu&&l.resultado);
+    const s=ligsCliente.length?ligsCliente[ligsCliente.length-1].resultado:'sem_contato';
+    sc[s]=(sc[s]||0)+1;
+  });
   const scL={interessado:'Interessado',negociacao:'Em negociação',fechado:'Fechado',perdido:'Perdido',sem_contato:'Sem contato'};
   const scC={interessado:'var(--blue)',negociacao:'var(--amber)',fechado:'var(--green)',perdido:'var(--red)',sem_contato:'var(--steel)'};
   document.getElementById('ch-status').innerHTML=total?Object.entries(sc).filter(([,v])=>v>0).map(([k,v])=>`<div class="bar-row"><span class="bar-label">${scL[k]}</span><div class="bar-track"><div class="bar-fill" style="width:${Math.round(v/total*100)}%;background:${scC[k]}"></div></div><span class="bar-count">${v}</span></div>`).join(''):'<p class="empty">sem dados</p>';
@@ -878,6 +958,7 @@ function renderDash(){
   const tp=perdidos.length||1;
   document.getElementById('ch-motivos').innerHTML=perdidos.length?Object.entries(mc).map(([k,v])=>`<div class="bar-row"><span class="bar-label">${{preco:'Preço',prazo:'Prazo',outro:'Outro'}[k]}</span><div class="bar-track"><div class="bar-fill" style="width:${Math.round(v/tp*100)}%;background:${{preco:'var(--red)',prazo:'var(--amber)',outro:'var(--steel)'}[k]}"></div></div><span class="bar-count">${v}</span></div>`).join(''):'<p class="empty">nenhuma perda registrada</p>';
 
+  // cidades — baseado nos clientes filtrados
   const cidC={};
   clis.forEach(c=>{if(c.cidade){const k=c.cidade.trim();cidC[k]=(cidC[k]||0)+1;}});
   const cids=Object.entries(cidC).sort((a,b)=>b[1]-a[1]).slice(0,10);
@@ -889,6 +970,24 @@ function renderDash(){
   const ufs=Object.entries(ufC).sort((a,b)=>b[1]-a[1]);
   const maxU=ufs[0]?ufs[0][1]:1;
   document.getElementById('ch-ufs').innerHTML=ufs.length?ufs.map(([u,v])=>`<div class="bar-row"><span class="bar-label">${u}</span><div class="bar-track"><div class="bar-fill" style="width:${Math.round(v/maxU*100)}%;background:var(--steel3)"></div></div><span class="bar-count">${v}</span></div>`).join(''):'<p class="empty">sem dados de UF</p>';
+
+  // ligações por dia (quando filtro de data ativo)
+  const diasEl=document.getElementById('ch-dias');
+  if(diasEl){
+    if(dIni||dFim){
+      const dC={};
+      ligs.forEach(l=>{if(l.data){dC[l.data]=(dC[l.data]||0)+1;}});
+      const dias=Object.entries(dC).sort((a,b)=>{
+        const da=parseBR(a[0]),db2=parseBR(b[0]);
+        return da-db2;
+      });
+      const maxD=dias[0]?Math.max(...dias.map(d=>d[1])):1;
+      diasEl.innerHTML=dias.length?dias.map(([d,v])=>`<div class="bar-row"><span class="bar-label">${d}</span><div class="bar-track"><div class="bar-fill" style="width:${Math.round(v/maxD*100)}%;background:var(--blue)"></div></div><span class="bar-count">${v}</span></div>`).join(''):'<p class="empty">sem ligações no período</p>';
+      document.getElementById('card-dias').style.display='block';
+    }else{
+      document.getElementById('card-dias').style.display='none';
+    }
+  }
 }
 
 function importarCSV(input){
