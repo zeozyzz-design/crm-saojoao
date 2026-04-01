@@ -389,7 +389,26 @@ label:first-child{margin-top:0}
   font-family:'JetBrains Mono',monospace;margin-bottom:14px;
 }
 
-/* RESPONSIVE */
+/* CHIPS CIDADE */
+.chip{
+  display:inline-flex;align-items:center;gap:5px;
+  padding:4px 10px;border-radius:20px;font-size:11px;font-weight:500;
+  cursor:pointer;border:1px solid var(--border2);
+  background:var(--black4);color:var(--text2);
+  transition:all .15s;font-family:'Barlow',sans-serif;
+}
+.chip:hover{border-color:var(--orange);color:var(--orange)}
+.chip.active{background:var(--orange);border-color:var(--orange);color:#fff}
+.chip-x{font-size:13px;line-height:1;opacity:.7}
+.inativo-banner{
+  background:var(--amber-dim);border:1px solid var(--amber-dim);
+  border-left:3px solid var(--amber);
+  border-radius:var(--radius);padding:8px 14px;
+  font-size:12px;color:var(--amber);
+  font-family:'JetBrains Mono',monospace;
+  margin-bottom:10px;display:none;
+}
+
 @media(max-width:640px){
   .sidebar{width:52px}
   .logo-img,.logo-tag,.nav-label,.nav-item span,.sidebar-foot .btn span{display:none}
@@ -514,8 +533,24 @@ label:first-child{margin-top:0}
             <option value="fechado">Fechado</option>
             <option value="perdido">Perdido</option>
             <option value="sem_contato">Sem contato</option>
+            <option value="inativo">Inativo (+90 dias)</option>
           </select>
         </div>
+
+        <!-- Filtro multicidade -->
+        <div style="margin-bottom:12px">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap">
+            <span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--steel2);text-transform:uppercase;letter-spacing:1px">Filtrar por cidade</span>
+            <button class="btn btn-sm" onclick="limparCidades()" style="font-size:11px;padding:3px 8px">Limpar</button>
+            <button class="btn btn-sm" id="btn-inativos" onclick="toggleInativos()" style="font-size:11px;padding:3px 8px">
+              ⚠ Ver inativos (+90 dias)
+            </button>
+            <span id="cidade-count" style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--orange);display:none"></span>
+          </div>
+          <div id="cidade-chips" style="display:flex;flex-wrap:wrap;gap:6px"></div>
+        </div>
+
+        <div id="lista-info" style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text3);margin-bottom:8px"></div>
         <div class="card" style="padding:0 20px">
           <div id="lista-cli"><div class="loading"><div class="spin"></div>Carregando...</div></div>
         </div>
@@ -722,28 +757,128 @@ function poblarSelects(){
   });
 }
 
+// ── estado dos chips de cidade ──────────────────────────────────────────────
+let cidadesSel = new Set();
+let mostraInativos = false;
+const DIAS_INATIVO = 90;
+
+function diasSemContato(cid){
+  const ul = ultimaLig(cid);
+  if(!ul) return Infinity;
+  const partes = ul.data.split('/');
+  if(partes.length !== 3) return Infinity;
+  const d = new Date(partes[2], partes[1]-1, partes[0]);
+  return Math.floor((Date.now() - d) / 86400000);
+}
+
+function isInativo(cid){
+  return diasSemContato(cid) >= DIAS_INATIVO;
+}
+
+function poblarChips(){
+  const cids = [...new Set(db.clientes.map(c=>(c.cidade||'').trim()).filter(Boolean))].sort();
+  const wrap = document.getElementById('cidade-chips');
+  if(!wrap) return;
+  wrap.innerHTML = cids.map(c=>`
+    <span class="chip ${cidadesSel.has(c)?'active':''}" onclick="toggleChip('${c.replace(/'/g,"\\'")}')">
+      ${c}${cidadesSel.has(c)?'  <span class="chip-x">×</span>':''}
+    </span>`).join('');
+  const cc = document.getElementById('cidade-count');
+  if(cidadesSel.size > 0){
+    cc.style.display='inline';
+    cc.textContent = cidadesSel.size + ' cidade' + (cidadesSel.size>1?'s':'') + ' selecionada' + (cidadesSel.size>1?'s':'');
+  } else {
+    cc.style.display='none';
+  }
+}
+
+function toggleChip(cidade){
+  if(cidadesSel.has(cidade)) cidadesSel.delete(cidade);
+  else cidadesSel.add(cidade);
+  poblarChips();
+  renderClientes();
+}
+
+function limparCidades(){
+  cidadesSel.clear();
+  poblarChips();
+  renderClientes();
+}
+
+function toggleInativos(){
+  mostraInativos = !mostraInativos;
+  const btn = document.getElementById('btn-inativos');
+  if(mostraInativos){
+    btn.classList.add('btn-ghost');
+    btn.textContent = '× Esconder inativos';
+    document.getElementById('fil-status').value = '';
+  } else {
+    btn.classList.remove('btn-ghost');
+    btn.textContent = '⚠ Ver inativos (+90 dias)';
+  }
+  renderClientes();
+}
+
 function renderClientes(){
   poblarSelects();
-  const busca=(document.getElementById('busca').value||'').toLowerCase();
-  const vend=document.getElementById('fil-vend').value;
-  const fst=document.getElementById('fil-status').value;
-  let lista=db.clientes.filter(c=>{
-    const bOk=(c.nome+' '+(c.telefone||'')).toLowerCase().includes(busca);
-    const vOk=!vend||c.vendedor===vend;
-    const sOk=!fst||statusUltimo(c.id)===fst;
-    return bOk&&vOk&&sOk;
+  poblarChips();
+  const busca = (document.getElementById('busca').value||'').toLowerCase();
+  const vend  = document.getElementById('fil-vend').value;
+  const fst   = document.getElementById('fil-status').value;
+
+  let lista = db.clientes.filter(c=>{
+    const bOk = (c.nome+' '+(c.telefone||'')).toLowerCase().includes(busca);
+    const vOk = !vend || c.vendedor === vend;
+    // multicidade
+    const cOk = cidadesSel.size === 0 || cidadesSel.has((c.cidade||'').trim());
+    // inativo
+    const inativo = isInativo(c.id);
+    if(mostraInativos) return bOk && vOk && cOk && inativo;
+    // status especial inativo no select
+    if(fst === 'inativo') return bOk && vOk && cOk && inativo;
+    const sOk = !fst || statusUltimo(c.id) === fst;
+    return bOk && vOk && cOk && sOk && !mostraInativos;
   });
-  const el=document.getElementById('lista-cli');
+
+  // banner inativos
+  let banner = document.getElementById('inativo-banner');
+  if(!banner){
+    banner = document.createElement('div');
+    banner.id = 'inativo-banner';
+    banner.className = 'inativo-banner';
+    document.getElementById('lista-cli').parentElement.before(banner);
+  }
+  if(mostraInativos || fst === 'inativo'){
+    const totalInat = db.clientes.filter(c=>isInativo(c.id)).length;
+    banner.style.display='block';
+    banner.textContent = `⚠  ${totalInat} cliente${totalInat!==1?'s':''} sem contato há mais de ${DIAS_INATIVO} dias`;
+  } else {
+    banner.style.display='none';
+  }
+
+  // contador
+  const info = document.getElementById('lista-info');
+  if(info) info.textContent = lista.length + ' cliente' + (lista.length!==1?'s':'') + ' encontrado' + (lista.length!==1?'s':'');
+
+  const el = document.getElementById('lista-cli');
   if(!lista.length){el.innerHTML='<p class="empty">nenhum cliente encontrado</p>';return;}
-  el.innerHTML=lista.map(c=>{
-    const s=statusUltimo(c.id);
-    const ul=ultimaLig(c.id);
-    const tl=totalLigs(c.id);
+
+  el.innerHTML = lista.map(c=>{
+    const s   = statusUltimo(c.id);
+    const ul  = ultimaLig(c.id);
+    const tl  = totalLigs(c.id);
+    const dias = diasSemContato(c.id);
+    const inativo = dias >= DIAS_INATIVO;
+    const diasStr = dias === Infinity ? 'sem contato' : dias === 0 ? 'hoje' : `há ${dias}d`;
+    const statusFinal = inativo ? 'inativo' : s;
+
     return`<div class="cli-row" onclick="abrirDetalhe('${c.id}')">
-      <div class="avatar ${avCor(s)}">${iniciais(c.nome)}</div>
+      <div class="avatar ${inativo ? 'av-cinza' : avCor(s)}">${iniciais(c.nome)}</div>
       <div style="flex:1;min-width:0">
-        <div class="cli-name">${c.nome}&nbsp;&nbsp;${badgeStatus(s)}</div>
-        <div class="cli-sub">${[c.cidade,c.uf].filter(Boolean).join('/')||'—'} · ${c.vendedor||'—'} · ${tl} lig · ${ul?ul.data:'sem contato'}</div>
+        <div class="cli-name">${c.nome}&nbsp;&nbsp;${inativo
+          ? '<span class="badge" style="background:var(--amber-dim);color:var(--amber)">Inativo</span>'
+          : badgeStatus(s)}</div>
+        <div class="cli-sub">${[c.cidade,c.uf].filter(Boolean).join('/')||'—'} · ${c.vendedor||'—'} · ${tl} lig · ${ul ? ul.data+' ('+diasStr+')' : 'sem contato'}</div>
       </div>
       <button class="btn btn-primary btn-sm" onclick="event.stopPropagation();abrirLig('${c.id}')">+ Ligação</button>
     </div>`;
