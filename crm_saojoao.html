@@ -40,7 +40,6 @@ html,body{height:100%;background:var(--black);color:var(--text);font-family:'Bar
 ::-webkit-scrollbar{width:3px;height:3px}
 ::-webkit-scrollbar-thumb{background:var(--black5);border-radius:3px}
 
-/* LAYOUT */
 .app{display:flex;height:100vh;overflow:hidden}
 
 /* SIDEBAR */
@@ -55,8 +54,6 @@ html,body{height:100%;background:var(--black);color:var(--text);font-family:'Bar
   content:'';position:absolute;top:0;left:0;right:0;height:2px;
   background:linear-gradient(90deg,var(--orange),var(--orange2),transparent);
 }
-
-/* steel texture lines */
 .sidebar::after{
   content:'';position:absolute;inset:0;pointer-events:none;
   background:repeating-linear-gradient(
@@ -65,7 +62,6 @@ html,body{height:100%;background:var(--black);color:var(--text);font-family:'Bar
     rgba(255,255,255,0.018) 39px,rgba(255,255,255,0.018) 40px
   );
 }
-
 .sidebar-head{padding:20px 18px 14px;position:relative;z-index:1}
 .logo-img{height:38px;width:auto;object-fit:contain;display:block;filter:brightness(1.05)}
 .logo-tag{
@@ -74,7 +70,6 @@ html,body{height:100%;background:var(--black);color:var(--text);font-family:'Bar
   color:var(--steel2);text-transform:uppercase;
   margin-top:8px;padding-left:1px;
 }
-
 .nav-block{padding:8px 10px;position:relative;z-index:1}
 .nav-label{
   font-family:'JetBrains Mono',monospace;
@@ -96,7 +91,6 @@ html,body{height:100%;background:var(--black);color:var(--text);font-family:'Bar
 }
 .nav-icon{width:15px;height:15px;flex-shrink:0;opacity:.6}
 .nav-item.active .nav-icon,.nav-item:hover .nav-icon{opacity:1}
-
 .sidebar-foot{
   padding:12px 10px;border-top:1px solid var(--border);
   position:relative;z-index:1;margin-top:auto;
@@ -116,8 +110,6 @@ html,body{height:100%;background:var(--black);color:var(--text);font-family:'Bar
 
 /* MAIN */
 .main{flex:1;display:flex;flex-direction:column;overflow:hidden;background:var(--black)}
-
-/* TOPBAR */
 .topbar{
   padding:0 24px;height:56px;
   border-bottom:1px solid var(--border);
@@ -127,20 +119,15 @@ html,body{height:100%;background:var(--black);color:var(--text);font-family:'Bar
 .page-title{
   font-family:'Barlow Condensed',sans-serif;
   font-size:18px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;
-  color:var(--text);
 }
 .page-crumb{
   font-family:'JetBrains Mono',monospace;
   font-size:10px;color:var(--text3);margin-top:1px;letter-spacing:.5px;
 }
 .topbar-right{display:flex;align-items:center;gap:12px}
-.sync-status{
-  font-family:'JetBrains Mono',monospace;
-  font-size:10px;color:var(--text3);
-}
+.sync-status{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text3);}
 .dot{width:6px;height:6px;border-radius:50%;background:var(--steel);display:inline-block;margin-right:5px}
 .dot.live{background:var(--green);box-shadow:0 0 6px var(--green)}
-
 .content{flex:1;overflow-y:auto;padding:22px 24px}
 
 /* SCREENS */
@@ -148,11 +135,8 @@ html,body{height:100%;background:var(--black);color:var(--text);font-family:'Bar
 
 /* CARDS */
 .card{
-  background:var(--black2);
-  border:1px solid var(--border);
-  border-radius:var(--radius-lg);
-  padding:18px 20px;
-  margin-bottom:14px;
+  background:var(--black2);border:1px solid var(--border);
+  border-radius:var(--radius-lg);padding:18px 20px;margin-bottom:14px;
 }
 .card-title{
   font-family:'Barlow Condensed',sans-serif;
@@ -160,39 +144,22 @@ html,body{height:100%;background:var(--black);color:var(--text);font-family:'Bar
   text-transform:uppercase;color:var(--steel2);
   margin-bottom:14px;display:flex;align-items:center;gap:8px;
 }
-.card-title::before{
-  content:'';width:3px;height:12px;
-  background:var(--orange);border-radius:2px;flex-shrink:0;
-}
+.card-title::before{content:'';width:3px;height:12px;background:var(--orange);border-radius:2px;flex-shrink:0;}
 
-/* GRID */
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 .grid4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:14px}
 
 /* METRICS */
 .metric{
-  background:var(--black3);
-  border:1px solid var(--border);
-  border-radius:var(--radius-lg);
-  padding:16px 18px;
-  position:relative;overflow:hidden;
+  background:var(--black3);border:1px solid var(--border);
+  border-radius:var(--radius-lg);padding:16px 18px;position:relative;overflow:hidden;
 }
-.metric::after{
-  content:'';position:absolute;bottom:0;left:0;right:0;height:2px;
-  background:var(--border);
-}
+.metric::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:var(--border);}
 .metric.accent::after{background:var(--orange)}
 .metric.green::after{background:var(--green)}
 .metric.red::after{background:var(--red)}
-.metric-val{
-  font-family:'Barlow Condensed',sans-serif;
-  font-size:32px;font-weight:700;letter-spacing:-1px;line-height:1;
-}
-.metric-label{
-  font-family:'JetBrains Mono',monospace;
-  font-size:9px;color:var(--text3);
-  margin-top:6px;text-transform:uppercase;letter-spacing:1px;
-}
+.metric-val{font-family:'Barlow Condensed',sans-serif;font-size:32px;font-weight:700;letter-spacing:-1px;line-height:1;}
+.metric-label{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--text3);margin-top:6px;text-transform:uppercase;letter-spacing:1px;}
 
 /* BADGES */
 .badge{
@@ -235,13 +202,13 @@ label:first-child{margin-top:0}
   transition:all .15s;display:inline-flex;align-items:center;gap:6px;
 }
 .btn:hover{background:var(--black4);color:var(--text)}
-.btn-primary{
-  background:var(--orange);border-color:var(--orange);color:#fff;font-weight:600;
-}
+.btn-primary{background:var(--orange);border-color:var(--orange);color:#fff;font-weight:600;}
 .btn-primary:hover{background:var(--orange2);border-color:var(--orange2)}
 .btn-ghost{background:var(--orange-dim);border-color:transparent;color:var(--orange)}
 .btn-ghost:hover{background:rgba(232,82,10,0.25)}
 .btn-sm{padding:5px 10px;font-size:12px}
+.btn-danger{background:var(--red-dim);border-color:transparent;color:var(--red);}
+.btn-danger:hover{background:rgba(248,113,113,0.2)}
 
 /* CLIENTE ROW */
 .cli-row{
@@ -250,10 +217,7 @@ label:first-child{margin-top:0}
   cursor:pointer;transition:all .1s;
 }
 .cli-row:last-child{border-bottom:none}
-.cli-row:hover{
-  background:rgba(255,255,255,0.02);
-  margin:0 -20px;padding:11px 20px;
-}
+.cli-row:hover{background:rgba(255,255,255,0.02);margin:0 -20px;padding:11px 20px;}
 .avatar{
   width:36px;height:36px;border-radius:var(--radius);
   display:flex;align-items:center;justify-content:center;
@@ -266,22 +230,12 @@ label:first-child{margin-top:0}
 .av-vermelho{background:var(--red-dim);color:var(--red)}
 .av-cinza{background:rgba(255,255,255,0.04);color:var(--steel2)}
 .cli-name{font-size:13px;font-weight:600;flex:1;min-width:0}
-.cli-sub{
-  font-size:11px;color:var(--text3);margin-top:2px;
-  font-family:'JetBrains Mono',monospace;
-}
+.cli-sub{font-size:11px;color:var(--text3);margin-top:2px;font-family:'JetBrains Mono',monospace;}
 
 /* RANKING */
-.rank-row{
-  display:flex;align-items:center;gap:12px;
-  padding:13px 0;border-bottom:1px solid var(--border);
-}
+.rank-row{display:flex;align-items:center;gap:12px;padding:13px 0;border-bottom:1px solid var(--border);}
 .rank-row:last-child{border-bottom:none}
-.rank-num{
-  font-family:'Barlow Condensed',sans-serif;
-  font-size:20px;font-weight:700;min-width:28px;
-  color:var(--black5);
-}
+.rank-num{font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:700;min-width:28px;color:var(--black5);}
 .rank-num.gold{color:var(--amber)}
 .rank-num.silver{color:var(--steel3)}
 .rank-num.bronze{color:var(--orange)}
@@ -289,11 +243,7 @@ label:first-child{margin-top:0}
 .rank-sub{font-size:10px;color:var(--text3);margin-top:2px;font-family:'JetBrains Mono',monospace}
 .rank-bar-wrap{width:100px;background:var(--black5);border-radius:3px;height:4px;overflow:hidden}
 .rank-bar{height:100%;border-radius:3px;transition:width .7s cubic-bezier(.4,0,.2,1)}
-.meta-tag{
-  font-family:'Barlow Condensed',sans-serif;
-  font-size:11px;font-weight:600;padding:3px 9px;
-  border-radius:4px;text-transform:uppercase;letter-spacing:.5px;white-space:nowrap;
-}
+.meta-tag{font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:600;padding:3px 9px;border-radius:4px;text-transform:uppercase;letter-spacing:.5px;white-space:nowrap;}
 .meta-ok{background:var(--green-dim);color:var(--green)}
 .meta-par{background:var(--amber-dim);color:var(--amber)}
 .meta-no{background:var(--red-dim);color:var(--red)}
@@ -303,10 +253,7 @@ label:first-child{margin-top:0}
 .bar-label{font-size:12px;color:var(--text2);min-width:110px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .bar-track{flex:1;background:var(--black5);border-radius:3px;height:6px;overflow:hidden}
 .bar-fill{height:100%;border-radius:3px;transition:width .5s}
-.bar-count{
-  font-size:11px;color:var(--text3);min-width:26px;text-align:right;
-  font-family:'JetBrains Mono',monospace;
-}
+.bar-count{font-size:11px;color:var(--text3);min-width:26px;text-align:right;font-family:'JetBrains Mono',monospace;}
 
 /* MODAL */
 .modal-overlay{
@@ -316,10 +263,8 @@ label:first-child{margin-top:0}
   z-index:200;backdrop-filter:blur(4px);
 }
 .modal{
-  background:var(--black2);
-  border:1px solid var(--border2);
-  border-radius:var(--radius-lg);
-  padding:24px;width:370px;max-width:95vw;max-height:90vh;overflow-y:auto;
+  background:var(--black2);border:1px solid var(--border2);
+  border-radius:var(--radius-lg);padding:24px;width:370px;max-width:95vw;max-height:90vh;overflow-y:auto;
   position:relative;
 }
 .modal::before{
@@ -327,38 +272,26 @@ label:first-child{margin-top:0}
   background:linear-gradient(90deg,var(--orange),transparent);
   border-radius:var(--radius-lg) var(--radius-lg) 0 0;
 }
-.modal-title{
-  font-family:'Barlow Condensed',sans-serif;
-  font-size:18px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;
-}
+.modal-title{font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;}
 .modal-sub{font-size:12px;color:var(--text3);margin-bottom:18px;font-family:'JetBrains Mono',monospace}
 
 /* QUICK BUTTONS */
 .qbtns{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}
 .qbtn{
-  flex:1;padding:10px 10px;
-  border:1px solid var(--border2);border-radius:var(--radius);
-  background:transparent;color:var(--text2);
-  font-size:13px;font-weight:500;cursor:pointer;
-  font-family:'Barlow',sans-serif;text-align:center;min-width:70px;
-  transition:all .15s;
+  flex:1;padding:10px 10px;border:1px solid var(--border2);border-radius:var(--radius);
+  background:transparent;color:var(--text2);font-size:13px;font-weight:500;cursor:pointer;
+  font-family:'Barlow',sans-serif;text-align:center;min-width:70px;transition:all .15s;
 }
 .qbtn:hover{background:var(--black4);color:var(--text)}
 .qbtn.sel{background:var(--orange);border-color:var(--orange);color:#fff;font-weight:600}
 
 /* HIST */
-.hist-item{
-  display:flex;gap:10px;padding:8px 0;
-  border-bottom:1px solid var(--border);font-size:12px;
-}
+.hist-item{display:flex;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);font-size:12px;}
 .hist-item:last-child{border-bottom:none}
 .hist-time{color:var(--text3);min-width:80px;font-family:'JetBrains Mono',monospace;font-size:10px;padding-top:2px}
 
 /* UPLOAD */
-.upload-zone{
-  border:1px dashed var(--border2);border-radius:var(--radius-lg);
-  padding:32px;text-align:center;cursor:pointer;transition:all .2s;
-}
+.upload-zone{border:1px dashed var(--border2);border-radius:var(--radius-lg);padding:32px;text-align:center;cursor:pointer;transition:all .2s;}
 .upload-zone:hover{border-color:var(--orange);background:var(--orange-dim2)}
 
 /* TOAST */
@@ -382,24 +315,61 @@ label:first-child{margin-top:0}
 .search-bar select{max-width:165px}
 
 /* INFO BOX */
-.infobox{
-  background:var(--orange-dim2);border:1px solid var(--orange-dim);
-  border-radius:var(--radius);padding:10px 14px;
-  font-size:12px;color:var(--orange);
-  font-family:'JetBrains Mono',monospace;margin-bottom:14px;
-}
+.infobox{background:var(--orange-dim2);border:1px solid var(--orange-dim);border-radius:var(--radius);padding:10px 14px;font-size:12px;color:var(--orange);font-family:'JetBrains Mono',monospace;margin-bottom:14px;}
 
-/* CHIPS CIDADE */
-.chip{
-  display:inline-flex;align-items:center;gap:5px;
-  padding:4px 10px;border-radius:20px;font-size:11px;font-weight:500;
-  cursor:pointer;border:1px solid var(--border2);
-  background:var(--black4);color:var(--text2);
-  transition:all .15s;font-family:'Barlow',sans-serif;
+/* ── MULTI-SELECT CIDADE DROPDOWN ─────────────────────────────────────────── */
+.ms-wrap{position:relative;display:inline-block;min-width:200px;max-width:260px;}
+.ms-trigger{
+  display:flex;align-items:center;justify-content:space-between;gap:8px;
+  padding:9px 12px;background:var(--black3);border:1px solid var(--border2);
+  border-radius:var(--radius);cursor:pointer;font-size:13px;color:var(--text2);
+  transition:border .15s;user-select:none;white-space:nowrap;
 }
-.chip:hover{border-color:var(--orange);color:var(--orange)}
-.chip.active{background:var(--orange);border-color:var(--orange);color:#fff}
-.chip-x{font-size:13px;line-height:1;opacity:.7}
+.ms-trigger:hover{border-color:var(--border2)}
+.ms-trigger.open{border-color:var(--orange)}
+.ms-arrow{font-size:10px;opacity:.5;transition:transform .15s;flex-shrink:0}
+.ms-trigger.open .ms-arrow{transform:rotate(180deg)}
+.ms-badge-count{
+  background:var(--orange);color:#fff;border-radius:4px;
+  font-size:10px;font-weight:700;padding:1px 6px;font-family:'Barlow Condensed',sans-serif;
+}
+.ms-dropdown{
+  position:absolute;top:calc(100% + 4px);left:0;right:0;
+  background:var(--black3);border:1px solid var(--border2);
+  border-radius:var(--radius-lg);z-index:100;
+  box-shadow:0 8px 32px rgba(0,0,0,.5);
+  min-width:200px;max-width:280px;overflow:hidden;
+  animation:dropIn .12s ease;
+}
+@keyframes dropIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+.ms-search{
+  padding:8px;border-bottom:1px solid var(--border);
+}
+.ms-search input{
+  background:var(--black4);border:1px solid var(--border);padding:7px 10px;font-size:12px;
+}
+.ms-list{max-height:220px;overflow-y:auto}
+.ms-item{
+  display:flex;align-items:center;gap:10px;
+  padding:9px 14px;cursor:pointer;font-size:13px;color:var(--text2);
+  transition:background .1s;
+}
+.ms-item:hover{background:var(--black4)}
+.ms-item.checked{color:var(--text)}
+.ms-checkbox{
+  width:14px;height:14px;border-radius:3px;border:1px solid var(--border2);
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+  font-size:9px;transition:all .1s;
+}
+.ms-item.checked .ms-checkbox{background:var(--orange);border-color:var(--orange);color:#fff;}
+.ms-footer{
+  padding:8px 14px;border-top:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;gap:8px;
+}
+.ms-footer-count{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text3);}
+.ms-clear{font-size:11px;padding:4px 8px;cursor:pointer;color:var(--orange);background:transparent;border:none;font-family:'Barlow',sans-serif;font-weight:600;}
+.ms-clear:hover{text-decoration:underline}
+
 .inativo-banner{
   background:var(--amber-dim);border:1px solid var(--amber-dim);
   border-left:3px solid var(--amber);
@@ -455,14 +425,63 @@ label:first-child{margin-top:0}
 
 <!-- MODAL DETALHE -->
 <div id="modal-cli" class="modal-overlay" style="display:none">
-  <div class="modal" style="width:420px">
+  <div class="modal" style="width:440px">
     <div class="modal-title" id="dc-nome"></div>
     <div id="dc-info" style="margin-bottom:14px"></div>
     <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--steel);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:10px">Histórico de ligações</div>
     <div id="dc-hist" style="max-height:200px;overflow-y:auto;margin-bottom:16px"></div>
-    <div style="display:flex;justify-content:space-between;gap:8px">
+    <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap">
       <button class="btn btn-sm" onclick="closeModal('modal-cli')">Fechar</button>
-      <button class="btn btn-primary btn-sm" onclick="ligDoDetalhe()">+ Registrar ligação</button>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-sm" onclick="abrirEdicao(modalCliId)">✎ Editar</button>
+        <button class="btn btn-primary btn-sm" onclick="ligDoDetalhe()">+ Registrar ligação</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL EDIÇÃO -->
+<div id="modal-edit" class="modal-overlay" style="display:none">
+  <div class="modal" style="width:460px">
+    <div class="modal-title">Editar Cliente</div>
+    <div class="modal-sub" id="edit-sub" style="margin-top:4px;margin-bottom:16px"></div>
+    <div class="grid2">
+      <div><label>Nome</label><input id="e-nome" placeholder="João Silva"></div>
+      <div><label>Telefone</label><input id="e-tel" placeholder="(35) 99999-0000"></div>
+    </div>
+    <div class="grid2">
+      <div><label>Cidade</label><input id="e-cidade" placeholder="Pouso Alegre"></div>
+      <div><label>UF</label>
+        <select id="e-uf"><option value="">Selecione</option>
+          <option>AC</option><option>AL</option><option>AM</option><option>AP</option><option>BA</option>
+          <option>CE</option><option>DF</option><option>ES</option><option>GO</option><option>MA</option>
+          <option>MG</option><option>MS</option><option>MT</option><option>PA</option><option>PB</option>
+          <option>PE</option><option>PI</option><option>PR</option><option>RJ</option><option>RN</option>
+          <option>RO</option><option>RR</option><option>RS</option><option>SC</option><option>SE</option>
+          <option>SP</option><option>TO</option>
+        </select>
+      </div>
+    </div>
+    <label>Vendedor responsável</label>
+    <input id="e-vend" placeholder="Nome do vendedor">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:20px;flex-wrap:wrap;gap:8px">
+      <button class="btn btn-sm btn-danger" onclick="confirmarExclusao()">🗑 Excluir cliente</button>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-sm" onclick="closeModal('modal-edit')">Cancelar</button>
+        <button class="btn btn-primary btn-sm" onclick="salvarEdicao()">Salvar alterações</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL CONFIRMAR EXCLUSÃO -->
+<div id="modal-del" class="modal-overlay" style="display:none">
+  <div class="modal" style="width:360px">
+    <div class="modal-title" style="color:var(--red)">Excluir cliente</div>
+    <p style="font-size:13px;color:var(--text2);margin:12px 0 20px">Tem certeza que deseja excluir <strong id="del-nome"></strong>? Esta ação não pode ser desfeita.</p>
+    <div style="display:flex;justify-content:flex-end;gap:8px">
+      <button class="btn btn-sm" onclick="closeModal('modal-del')">Cancelar</button>
+      <button class="btn btn-sm btn-danger" onclick="executarExclusao()">Confirmar exclusão</button>
     </div>
   </div>
 </div>
@@ -472,9 +491,9 @@ label:first-child{margin-top:0}
   <aside class="sidebar">
     <div class="sidebar-head">
       <img src="data:image/webp;base64,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" 
-           alt="São João" class="logo-img">
-      <div class="logo-tag">CRM · Comercial</div>
-    </div>
+             alt="São João" class="logo-img">
+        <div class="logo-tag">CRM · Comercial</div>
+      </div>
     <nav class="nav-block">
       <div class="nav-label">Operação</div>
       <div class="nav-item active" onclick="showScreen('clientes',this)">
@@ -523,10 +542,10 @@ label:first-child{margin-top:0}
 
       <!-- CLIENTES -->
       <div id="screen-clientes" class="screen active">
-        <div class="search-bar">
-          <input id="busca" placeholder="Buscar cliente..." oninput="renderClientes()">
-          <select id="fil-vend" onchange="renderClientes()"><option value="">Todos vendedores</option></select>
-          <select id="fil-status" onchange="renderClientes()">
+        <div class="search-bar" style="align-items:flex-end">
+          <input id="busca" placeholder="Buscar cliente..." oninput="renderClientes()" style="flex:1;min-width:140px">
+          <select id="fil-vend" onchange="renderClientes()" style="max-width:160px"></select>
+          <select id="fil-status" onchange="renderClientes()" style="max-width:160px">
             <option value="">Todos status</option>
             <option value="interessado">Interessado</option>
             <option value="negociacao">Em negociação</option>
@@ -535,22 +554,31 @@ label:first-child{margin-top:0}
             <option value="sem_contato">Sem contato</option>
             <option value="inativo">Inativo (+90 dias)</option>
           </select>
-        </div>
-
-        <!-- Filtro multicidade -->
-        <div style="margin-bottom:12px">
-          <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap">
-            <span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--steel2);text-transform:uppercase;letter-spacing:1px">Filtrar por cidade</span>
-            <button class="btn btn-sm" onclick="limparCidades()" style="font-size:11px;padding:3px 8px">Limpar</button>
-            <button class="btn btn-sm" id="btn-inativos" onclick="toggleInativos()" style="font-size:11px;padding:3px 8px">
-              ⚠ Ver inativos (+90 dias)
-            </button>
-            <span id="cidade-count" style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--orange);display:none"></span>
+          <!-- MULTI-SELECT CIDADE -->
+          <div class="ms-wrap" id="ms-wrap">
+            <div class="ms-trigger" id="ms-trigger" onclick="toggleMsDropdown()">
+              <span id="ms-label">Filtrar por cidade</span>
+              <span id="ms-badge" style="display:none" class="ms-badge-count"></span>
+              <span class="ms-arrow">▼</span>
+            </div>
+            <div class="ms-dropdown" id="ms-dropdown" style="display:none">
+              <div class="ms-search">
+                <input id="ms-search-input" placeholder="Buscar cidade..." oninput="renderMsItems()" onclick="event.stopPropagation()">
+              </div>
+              <div class="ms-list" id="ms-list"></div>
+              <div class="ms-footer">
+                <span class="ms-footer-count" id="ms-footer-count">0 selecionada(s)</span>
+                <button class="ms-clear" onclick="limparCidades()">Limpar</button>
+              </div>
+            </div>
           </div>
-          <div id="cidade-chips" style="display:flex;flex-wrap:wrap;gap:6px"></div>
+          <button class="btn btn-sm" id="btn-inativos" onclick="toggleInativos()" style="white-space:nowrap">
+            ⚠ Inativos
+          </button>
         </div>
 
         <div id="lista-info" style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text3);margin-bottom:8px"></div>
+        <div id="inativo-banner" class="inativo-banner"></div>
         <div class="card" style="padding:0 20px">
           <div id="lista-cli"><div class="loading"><div class="spin"></div>Carregando...</div></div>
         </div>
@@ -600,14 +628,8 @@ label:first-child{margin-top:0}
         <div id="dash-filtro-ativo" style="display:none;margin-bottom:10px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--orange);background:var(--orange-dim);border-radius:var(--radius);padding:6px 12px"></div>
         <div class="grid4" id="kpi-cards"></div>
         <div class="grid2" style="margin-bottom:14px">
-          <div class="card">
-            <div class="card-title">Status dos clientes</div>
-            <div id="ch-status"></div>
-          </div>
-          <div class="card">
-            <div class="card-title">Motivos de perda</div>
-            <div id="ch-motivos"></div>
-          </div>
+          <div class="card"><div class="card-title">Status dos clientes</div><div id="ch-status"></div></div>
+          <div class="card"><div class="card-title">Motivos de perda</div><div id="ch-motivos"></div></div>
         </div>
         <div class="card" id="card-dias" style="display:none;margin-bottom:14px">
           <div class="card-title">Ligações por dia</div>
@@ -680,6 +702,7 @@ label:first-child{margin-top:0}
 const API='https://script.google.com/macros/s/AKfycbyAYvS90fCQ1GLh0DE3Lsf7VQR9H7zAmu5V4TCCdy9CKhmqpYObZEC0SQyqjOM8EAp6/exec';
 let db={clientes:[],ligacoes:[],meta:50};
 let modalCliId=null,atendeuSel=null,resultadoSel=null,syncing=false;
+let editCliId=null;
 
 async function api(data){
   const r=await fetch(API,{method:'POST',body:JSON.stringify(data),headers:{'Content-Type':'text/plain'}});
@@ -704,7 +727,7 @@ async function syncAll(){
     db.ligacoes=ligs.map(l=>({...l,cid:String(l.clienteId),atendeu:l.atendeu==='TRUE'||l.atendeu===true}));
     db.meta=metaR.meta||50;
     document.getElementById('meta-input').value=db.meta;
-    poblarSelects();renderClientes();renderDash();renderRanking();
+    poblarSelects();renderMsItems();renderClientes();renderDash();renderRanking();
     setSyncStatus('atualizado '+new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}),true);
     toast('Dados sincronizados!','ok');
   }catch(e){
@@ -726,12 +749,37 @@ const hoje=()=>new Date().toLocaleDateString('pt-BR');
 function iniciais(n){return n.split(' ').slice(0,2).map(p=>p[0]).join('').toUpperCase();}
 function getVendedores(){return[...new Set(db.clientes.map(c=>c.vendedor).filter(Boolean))].sort();}
 
+// ── STATUS: apenas conta se a ligação foi atendida E tem resultado ──────────
 function statusUltimo(cid){
   const ls=db.ligacoes.filter(l=>String(l.cid)===String(cid)&&l.atendeu&&l.resultado);
   return ls.length?ls[ls.length-1].resultado:'sem_contato';
 }
-function ultimaLig(cid){const ls=db.ligacoes.filter(l=>String(l.cid)===String(cid));return ls.length?ls[ls.length-1]:null;}
+
+// Retorna a última ligação de qualquer tipo (atendida ou não)
+function ultimaLig(cid){
+  const ls=db.ligacoes.filter(l=>String(l.cid)===String(cid));
+  return ls.length?ls[ls.length-1]:null;
+}
 function totalLigs(cid){return db.ligacoes.filter(l=>String(l.cid)===String(cid)).length;}
+
+// ── LÓGICA DE INATIVO: só considera inativo SE houve ao menos 1 ligação
+//    (primeiro contato já foi feito) E faz 90+ dias sem nova ligação ─────────
+const DIAS_INATIVO=90;
+
+function diasDesdeUltimaLig(cid){
+  const ul=ultimaLig(cid);
+  if(!ul||!ul.data)return null; // nunca houve ligação
+  const partes=ul.data.split('/');
+  if(partes.length!==3)return null;
+  const d=new Date(partes[2],partes[1]-1,partes[0]);
+  return Math.floor((Date.now()-d)/86400000);
+}
+
+function isInativo(cid){
+  const dias=diasDesdeUltimaLig(cid);
+  if(dias===null)return false; // nunca contatado → NÃO é inativo, é prospecto
+  return dias>=DIAS_INATIVO;
+}
 
 function badgeStatus(s){
   const m={interessado:['b-azul','Interessado'],negociacao:['b-amarelo','Em negociação'],fechado:['b-verde','Fechado'],perdido:['b-vermelho','Perdido'],sem_contato:['b-cinza','Sem contato'],nao_atendeu:['b-cinza','Não atendeu']};
@@ -757,134 +805,162 @@ function poblarSelects(){
   });
 }
 
-// ── estado dos chips de cidade ──────────────────────────────────────────────
-let cidadesSel = new Set();
-let mostraInativos = false;
-const DIAS_INATIVO = 90;
+// ─────────────────────────────────────────────────────────────────────────────
+// MULTI-SELECT CIDADE
+// ─────────────────────────────────────────────────────────────────────────────
+let cidadesSel=new Set();
+let msOpen=false;
+let mostraInativos=false;
 
-function diasSemContato(cid){
-  const ul = ultimaLig(cid);
-  if(!ul) return Infinity;
-  const partes = ul.data.split('/');
-  if(partes.length !== 3) return Infinity;
-  const d = new Date(partes[2], partes[1]-1, partes[0]);
-  return Math.floor((Date.now() - d) / 86400000);
+function getAllCidades(){
+  return[...new Set(db.clientes.map(c=>(c.cidade||'').trim()).filter(Boolean))].sort();
 }
 
-function isInativo(cid){
-  return diasSemContato(cid) >= DIAS_INATIVO;
-}
-
-function poblarChips(){
-  const cids = [...new Set(db.clientes.map(c=>(c.cidade||'').trim()).filter(Boolean))].sort();
-  const wrap = document.getElementById('cidade-chips');
-  if(!wrap) return;
-  wrap.innerHTML = cids.map(c=>`
-    <span class="chip ${cidadesSel.has(c)?'active':''}" onclick="toggleChip('${c.replace(/'/g,"\\'")}')">
-      ${c}${cidadesSel.has(c)?'  <span class="chip-x">×</span>':''}
-    </span>`).join('');
-  const cc = document.getElementById('cidade-count');
-  if(cidadesSel.size > 0){
-    cc.style.display='inline';
-    cc.textContent = cidadesSel.size + ' cidade' + (cidadesSel.size>1?'s':'') + ' selecionada' + (cidadesSel.size>1?'s':'');
-  } else {
-    cc.style.display='none';
+function toggleMsDropdown(){
+  msOpen=!msOpen;
+  document.getElementById('ms-dropdown').style.display=msOpen?'block':'none';
+  document.getElementById('ms-trigger').classList.toggle('open',msOpen);
+  if(msOpen){
+    setTimeout(()=>document.getElementById('ms-search-input').focus(),50);
   }
 }
 
-function toggleChip(cidade){
-  if(cidadesSel.has(cidade)) cidadesSel.delete(cidade);
-  else cidadesSel.add(cidade);
-  poblarChips();
+// Fecha dropdown ao clicar fora
+document.addEventListener('click',e=>{
+  if(!document.getElementById('ms-wrap').contains(e.target)){
+    if(msOpen){
+      msOpen=false;
+      document.getElementById('ms-dropdown').style.display='none';
+      document.getElementById('ms-trigger').classList.remove('open');
+    }
+  }
+});
+
+function renderMsItems(){
+  const q=(document.getElementById('ms-search-input')?.value||'').toLowerCase();
+  const todas=getAllCidades().filter(c=>c.toLowerCase().includes(q));
+  document.getElementById('ms-list').innerHTML=todas.map(c=>{
+    const checked=cidadesSel.has(c);
+    return`<div class="ms-item ${checked?'checked':''}" onclick="toggleMsCidade('${c.replace(/'/g,"\\'")}')">
+      <div class="ms-checkbox">${checked?'✓':''}</div>
+      <span>${c}</span>
+    </div>`;
+  }).join('');
+  atualizarMsBadge();
+}
+
+function toggleMsCidade(c){
+  if(cidadesSel.has(c))cidadesSel.delete(c);
+  else cidadesSel.add(c);
+  renderMsItems();
   renderClientes();
 }
 
 function limparCidades(){
   cidadesSel.clear();
-  poblarChips();
+  renderMsItems();
   renderClientes();
 }
 
+function atualizarMsBadge(){
+  const n=cidadesSel.size;
+  const badge=document.getElementById('ms-badge');
+  const label=document.getElementById('ms-label');
+  const fc=document.getElementById('ms-footer-count');
+  if(n>0){
+    badge.style.display='inline';
+    badge.textContent=n;
+    label.textContent='Cidades';
+  }else{
+    badge.style.display='none';
+    label.textContent='Filtrar por cidade';
+  }
+  if(fc)fc.textContent=n+' selecionada'+(n!==1?'s':'');
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// RENDER CLIENTES
+// ─────────────────────────────────────────────────────────────────────────────
 function toggleInativos(){
-  mostraInativos = !mostraInativos;
-  const btn = document.getElementById('btn-inativos');
+  mostraInativos=!mostraInativos;
+  const btn=document.getElementById('btn-inativos');
   if(mostraInativos){
     btn.classList.add('btn-ghost');
-    btn.textContent = '× Esconder inativos';
-    document.getElementById('fil-status').value = '';
-  } else {
+    btn.textContent='× Inativos';
+    document.getElementById('fil-status').value='';
+  }else{
     btn.classList.remove('btn-ghost');
-    btn.textContent = '⚠ Ver inativos (+90 dias)';
+    btn.textContent='⚠ Inativos';
   }
   renderClientes();
 }
 
 function renderClientes(){
   poblarSelects();
-  poblarChips();
-  const busca = (document.getElementById('busca').value||'').toLowerCase();
-  const vend  = document.getElementById('fil-vend').value;
-  const fst   = document.getElementById('fil-status').value;
+  renderMsItems();
+  const busca=(document.getElementById('busca').value||'').toLowerCase();
+  const vend=document.getElementById('fil-vend').value;
+  const fst=document.getElementById('fil-status').value;
 
-  let lista = db.clientes.filter(c=>{
-    const bOk = (c.nome+' '+(c.telefone||'')).toLowerCase().includes(busca);
-    const vOk = !vend || c.vendedor === vend;
-    // multicidade
-    const cOk = cidadesSel.size === 0 || cidadesSel.has((c.cidade||'').trim());
-    // inativo
-    const inativo = isInativo(c.id);
-    if(mostraInativos) return bOk && vOk && cOk && inativo;
-    // status especial inativo no select
-    if(fst === 'inativo') return bOk && vOk && cOk && inativo;
-    const sOk = !fst || statusUltimo(c.id) === fst;
-    return bOk && vOk && cOk && sOk && !mostraInativos;
+  let lista=db.clientes.filter(c=>{
+    const bOk=(c.nome+' '+(c.telefone||'')).toLowerCase().includes(busca);
+    const vOk=!vend||c.vendedor===vend;
+    const cOk=cidadesSel.size===0||cidadesSel.has((c.cidade||'').trim());
+    const inativo=isInativo(c.id);
+
+    if(mostraInativos)return bOk&&vOk&&cOk&&inativo;
+    if(fst==='inativo')return bOk&&vOk&&cOk&&inativo;
+    const sOk=!fst||statusUltimo(c.id)===fst;
+    return bOk&&vOk&&cOk&&sOk;
   });
 
   // banner inativos
-  let banner = document.getElementById('inativo-banner');
-  if(!banner){
-    banner = document.createElement('div');
-    banner.id = 'inativo-banner';
-    banner.className = 'inativo-banner';
-    document.getElementById('lista-cli').parentElement.before(banner);
-  }
-  if(mostraInativos || fst === 'inativo'){
-    const totalInat = db.clientes.filter(c=>isInativo(c.id)).length;
+  const banner=document.getElementById('inativo-banner');
+  if(mostraInativos||fst==='inativo'){
+    const totalInat=db.clientes.filter(c=>isInativo(c.id)).length;
     banner.style.display='block';
-    banner.textContent = `⚠  ${totalInat} cliente${totalInat!==1?'s':''} sem contato há mais de ${DIAS_INATIVO} dias`;
-  } else {
+    banner.textContent=`⚠  ${totalInat} cliente${totalInat!==1?'s':''} sem contato há mais de ${DIAS_INATIVO} dias após primeiro contato`;
+  }else{
     banner.style.display='none';
   }
 
-  // contador
-  const info = document.getElementById('lista-info');
-  if(info) info.textContent = lista.length + ' cliente' + (lista.length!==1?'s':'') + ' encontrado' + (lista.length!==1?'s':'');
+  const info=document.getElementById('lista-info');
+  if(info)info.textContent=lista.length+' cliente'+(lista.length!==1?'s':'')+' encontrado'+(lista.length!==1?'s':'');
 
-  const el = document.getElementById('lista-cli');
+  const el=document.getElementById('lista-cli');
   if(!lista.length){el.innerHTML='<p class="empty">nenhum cliente encontrado</p>';return;}
 
-  el.innerHTML = lista.map(c=>{
-    const s   = statusUltimo(c.id);
-    const ul  = ultimaLig(c.id);
-    const tl  = totalLigs(c.id);
-    const dias = diasSemContato(c.id);
-    const inativo = dias >= DIAS_INATIVO;
-    const diasStr = dias === Infinity ? 'sem contato' : dias === 0 ? 'hoje' : `há ${dias}d`;
-    const statusFinal = inativo ? 'inativo' : s;
+  el.innerHTML=lista.map(c=>{
+    const s=statusUltimo(c.id);
+    const ul=ultimaLig(c.id);
+    const tl=totalLigs(c.id);
+    const dias=diasDesdeUltimaLig(c.id);
+    const inativo=isInativo(c.id);
+    // Dias string
+    let diasStr='';
+    if(dias===null)diasStr='sem contato';
+    else if(dias===0)diasStr='hoje';
+    else diasStr=`há ${dias}d`;
 
     return`<div class="cli-row" onclick="abrirDetalhe('${c.id}')">
-      <div class="avatar ${inativo ? 'av-cinza' : avCor(s)}">${iniciais(c.nome)}</div>
+      <div class="avatar ${inativo?'av-cinza':avCor(s)}">${iniciais(c.nome)}</div>
       <div style="flex:1;min-width:0">
         <div class="cli-name">${c.nome}&nbsp;&nbsp;${inativo
-          ? '<span class="badge" style="background:var(--amber-dim);color:var(--amber)">Inativo</span>'
-          : badgeStatus(s)}</div>
-        <div class="cli-sub">${[c.cidade,c.uf].filter(Boolean).join('/')||'—'} · ${c.vendedor||'—'} · ${tl} lig · ${ul ? ul.data+' ('+diasStr+')' : 'sem contato'}</div>
+          ?'<span class="badge" style="background:var(--amber-dim);color:var(--amber)">Inativo</span>'
+          :badgeStatus(s)}</div>
+        <div class="cli-sub">${[c.cidade,c.uf].filter(Boolean).join('/')||'—'} · ${c.vendedor||'—'} · ${tl} lig · ${ul?ul.data+' ('+diasStr+')':'sem contato'}</div>
       </div>
-      <button class="btn btn-primary btn-sm" onclick="event.stopPropagation();abrirLig('${c.id}')">+ Ligação</button>
+      <div style="display:flex;gap:6px;align-items:center" onclick="event.stopPropagation()">
+        <button class="btn btn-sm" onclick="abrirEdicao('${c.id}')">✎</button>
+        <button class="btn btn-primary btn-sm" onclick="abrirLig('${c.id}')">+ Lig.</button>
+      </div>
     </div>`;
   }).join('');
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// CADASTRAR
+// ─────────────────────────────────────────────────────────────────────────────
 function cadastrarCli(){
   const nome=document.getElementById('c-nome').value.trim();
   if(!nome){toast('Informe o nome.','err');return;}
@@ -895,9 +971,67 @@ function cadastrarCli(){
   setTimeout(()=>document.getElementById('cad-ok').style.display='none',2500);
   ['c-nome','c-tel','c-cidade','c-vend'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('c-uf').value='';
-  poblarSelects();renderClientes();
+  poblarSelects();renderMsItems();renderClientes();
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// EDIÇÃO DE CLIENTE
+// ─────────────────────────────────────────────────────────────────────────────
+function abrirEdicao(cid){
+  editCliId=cid;
+  closeModal('modal-cli');
+  const cli=db.clientes.find(c=>String(c.id)===String(cid));
+  if(!cli)return;
+  document.getElementById('edit-sub').textContent='ID: '+cli.id;
+  document.getElementById('e-nome').value=cli.nome||'';
+  document.getElementById('e-tel').value=cli.telefone||'';
+  document.getElementById('e-cidade').value=cli.cidade||'';
+  document.getElementById('e-uf').value=cli.uf||'';
+  document.getElementById('e-vend').value=cli.vendedor||'';
+  document.getElementById('modal-edit').style.display='flex';
+}
+
+function salvarEdicao(){
+  const cli=db.clientes.find(c=>String(c.id)===String(editCliId));
+  if(!cli)return;
+  const nome=document.getElementById('e-nome').value.trim();
+  if(!nome){toast('O nome é obrigatório.','err');return;}
+  cli.nome=nome;
+  cli.telefone=document.getElementById('e-tel').value.trim();
+  cli.cidade=document.getElementById('e-cidade').value.trim();
+  cli.uf=document.getElementById('e-uf').value;
+  cli.vendedor=document.getElementById('e-vend').value.trim();
+
+  api({action:'editCliente',cliente:{id:cli.id,nome:cli.nome,tel:cli.telefone,telefone:cli.telefone,cidade:cli.cidade,uf:cli.uf,vendedor:cli.vendedor}})
+    .then(()=>toast('Cliente atualizado no Sheets!','ok'))
+    .catch(()=>toast('Salvo localmente. Erro ao sincronizar.','err'));
+
+  closeModal('modal-edit');
+  poblarSelects();renderMsItems();renderClientes();renderDash();renderRanking();
+  toast('Cliente atualizado!','ok');
+}
+
+function confirmarExclusao(){
+  const cli=db.clientes.find(c=>String(c.id)===String(editCliId));
+  if(!cli)return;
+  document.getElementById('del-nome').textContent=cli.nome;
+  document.getElementById('modal-del').style.display='flex';
+}
+
+function executarExclusao(){
+  db.clientes=db.clientes.filter(c=>String(c.id)!==String(editCliId));
+  db.ligacoes=db.ligacoes.filter(l=>String(l.cid)!==String(editCliId));
+  api({action:'deleteCliente',id:editCliId})
+    .then(()=>toast('Cliente removido!','ok'))
+    .catch(()=>toast('Removido localmente. Erro ao sincronizar.','err'));
+  closeModal('modal-del');
+  closeModal('modal-edit');
+  poblarSelects();renderMsItems();renderClientes();renderDash();renderRanking();
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// LIGAÇÕES
+// ─────────────────────────────────────────────────────────────────────────────
 function abrirLig(cid){
   modalCliId=cid;atendeuSel=null;resultadoSel=null;
   const cli=db.clientes.find(c=>String(c.id)===String(cid));
@@ -945,17 +1079,29 @@ function confirmarLig(){
   renderClientes();renderDash();renderRanking();
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// DETALHE CLIENTE
+// ─────────────────────────────────────────────────────────────────────────────
 function abrirDetalhe(cid){
   modalCliId=cid;
   const cli=db.clientes.find(c=>String(c.id)===String(cid));
   const s=statusUltimo(cid);
+  const inativo=isInativo(cid);
   document.getElementById('dc-nome').textContent=cli.nome;
-  document.getElementById('dc-info').innerHTML=`<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px">${badgeStatus(s)}<span style="font-size:10px;background:rgba(255,255,255,.05);border-radius:4px;padding:2px 8px;color:var(--steel2);font-family:'JetBrains Mono',monospace">${cli.vendedor||'—'}</span></div><p style="font-size:11px;color:var(--text3);font-family:'JetBrains Mono',monospace">${cli.telefone||''} ${[cli.cidade,cli.uf].filter(Boolean).join(' / ')}</p>`;
+  document.getElementById('dc-info').innerHTML=`
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px">
+      ${inativo?'<span class="badge" style="background:var(--amber-dim);color:var(--amber)">Inativo</span>':badgeStatus(s)}
+      <span style="font-size:10px;background:rgba(255,255,255,.05);border-radius:4px;padding:2px 8px;color:var(--steel2);font-family:'JetBrains Mono',monospace">${cli.vendedor||'—'}</span>
+    </div>
+    <p style="font-size:11px;color:var(--text3);font-family:'JetBrains Mono',monospace">${cli.telefone||''} ${[cli.cidade,cli.uf].filter(Boolean).join(' / ')}</p>`;
   const ligs=db.ligacoes.filter(l=>String(l.cid)===String(cid)).slice().reverse();
   document.getElementById('dc-hist').innerHTML=ligs.length?ligs.map(l=>`<div class="hist-item"><span class="hist-time">${l.data} ${l.hora}</span><div style="flex:1">${l.atendeu?badgeStatus(l.resultado):'<span class="badge b-cinza">Não atendeu</span>'}${l.motivo?` <span style="font-size:10px;color:var(--text3)">${{preco:'Preço',prazo:'Prazo',outro:'Outro'}[l.motivo]||''}</span>`:''}${l.obs?`<p style="font-size:11px;color:var(--text3);margin-top:3px">${l.obs}</p>`:''}</div></div>`).join(''):'<p class="empty" style="padding:1rem">nenhuma ligação registrada</p>';
   document.getElementById('modal-cli').style.display='flex';
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// GESTOR / RANKING
+// ─────────────────────────────────────────────────────────────────────────────
 async function salvarMeta(){
   const v=parseInt(document.getElementById('meta-input').value);
   if(!v||v<1){toast('Informe um número válido.','err');return;}
@@ -999,8 +1145,10 @@ function renderRanking(){
     </div>`).join('');
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// DASHBOARD
+// ─────────────────────────────────────────────────────────────────────────────
 function parseBR(d){
-  // converte dd/mm/aaaa → Date comparável
   if(!d)return null;
   const p=d.split('/');
   if(p.length===3)return new Date(p[2],p[1]-1,p[0]);
@@ -1029,46 +1177,38 @@ function poblarCidades(){
 function renderDash(){
   poblarSelects();
   poblarCidades();
-
-  const vend   = document.getElementById('dash-vend').value;
-  const cidade = document.getElementById('dash-cidade').value;
-  const dIni   = parseISO(document.getElementById('dash-data-ini').value);
-  const dFim   = parseISO(document.getElementById('dash-data-fim').value);
-
-  // filtro de clientes por vendedor e cidade
-  let clis = db.clientes.filter(c=>{
-    const vOk = !vend   || c.vendedor === vend;
-    const cOk = !cidade || (c.cidade||'').trim() === cidade;
-    return vOk && cOk;
+  const vend=document.getElementById('dash-vend').value;
+  const cidade=document.getElementById('dash-cidade').value;
+  const dIni=parseISO(document.getElementById('dash-data-ini').value);
+  const dFim=parseISO(document.getElementById('dash-data-fim').value);
+  let clis=db.clientes.filter(c=>{
+    const vOk=!vend||c.vendedor===vend;
+    const cOk=!cidade||(c.cidade||'').trim()===cidade;
+    return vOk&&cOk;
   });
-  const ids = new Set(clis.map(c=>String(c.id)));
-
-  // filtro de ligações por data
-  let ligs = db.ligacoes.filter(l=>{
-    if(!ids.has(String(l.cid))) return false;
-    if(dIni || dFim){
-      const ld = parseBR(l.data);
-      if(!ld) return false;
-      if(dIni && ld < dIni) return false;
-      if(dFim && ld > dFim) return false;
+  const ids=new Set(clis.map(c=>String(c.id)));
+  let ligs=db.ligacoes.filter(l=>{
+    if(!ids.has(String(l.cid)))return false;
+    if(dIni||dFim){
+      const ld=parseBR(l.data);if(!ld)return false;
+      if(dIni&&ld<dIni)return false;
+      if(dFim&&ld>dFim)return false;
     }
     return true;
   });
-
-  // badge de filtro ativo
   const filtros=[];
-  if(vend)   filtros.push('Vendedor: '+vend);
-  if(cidade) filtros.push('Cidade: '+cidade);
-  if(dIni)   filtros.push('De: '+document.getElementById('dash-data-ini').value.split('-').reverse().join('/'));
-  if(dFim)   filtros.push('Até: '+document.getElementById('dash-data-fim').value.split('-').reverse().join('/'));
+  if(vend)filtros.push('Vendedor: '+vend);
+  if(cidade)filtros.push('Cidade: '+cidade);
+  if(dIni)filtros.push('De: '+document.getElementById('dash-data-ini').value.split('-').reverse().join('/'));
+  if(dFim)filtros.push('Até: '+document.getElementById('dash-data-fim').value.split('-').reverse().join('/'));
   const fb=document.getElementById('dash-filtro-ativo');
   if(filtros.length){fb.style.display='block';fb.textContent='Filtros ativos: '+filtros.join(' · ');}
   else{fb.style.display='none';}
 
-  const total    = clis.length;
-  const fechados = ligs.filter(l=>l.resultado==='fechado').length;
-  const atendidas= ligs.filter(l=>l.atendeu).length;
-  const taxa     = ligs.length ? Math.round(fechados/ligs.length*100) : 0;
+  const total=clis.length;
+  const fechados=ligs.filter(l=>l.resultado==='fechado').length;
+  const atendidas=ligs.filter(l=>l.atendeu).length;
+  const taxa=ligs.length?Math.round(fechados/ligs.length*100):0;
 
   document.getElementById('kpi-cards').innerHTML=`
     <div class="metric"><div class="metric-val">${total}</div><div class="metric-label">Clientes</div></div>
@@ -1076,7 +1216,6 @@ function renderDash(){
     <div class="metric green"><div class="metric-val" style="color:var(--green)">${fechados}</div><div class="metric-label">Fechados</div></div>
     <div class="metric accent"><div class="metric-val" style="color:var(--orange)">${taxa}%</div><div class="metric-label">Conversão</div></div>`;
 
-  // status — baseado nas ligações filtradas (último status por cliente)
   const sc={interessado:0,negociacao:0,fechado:0,perdido:0,sem_contato:0};
   clis.forEach(c=>{
     const ligsCliente=ligs.filter(l=>String(l.cid)===String(c.id)&&l.atendeu&&l.resultado);
@@ -1093,7 +1232,6 @@ function renderDash(){
   const tp=perdidos.length||1;
   document.getElementById('ch-motivos').innerHTML=perdidos.length?Object.entries(mc).map(([k,v])=>`<div class="bar-row"><span class="bar-label">${{preco:'Preço',prazo:'Prazo',outro:'Outro'}[k]}</span><div class="bar-track"><div class="bar-fill" style="width:${Math.round(v/tp*100)}%;background:${{preco:'var(--red)',prazo:'var(--amber)',outro:'var(--steel)'}[k]}"></div></div><span class="bar-count">${v}</span></div>`).join(''):'<p class="empty">nenhuma perda registrada</p>';
 
-  // cidades — baseado nos clientes filtrados
   const cidC={};
   clis.forEach(c=>{if(c.cidade){const k=c.cidade.trim();cidC[k]=(cidC[k]||0)+1;}});
   const cids=Object.entries(cidC).sort((a,b)=>b[1]-a[1]).slice(0,10);
@@ -1106,17 +1244,13 @@ function renderDash(){
   const maxU=ufs[0]?ufs[0][1]:1;
   document.getElementById('ch-ufs').innerHTML=ufs.length?ufs.map(([u,v])=>`<div class="bar-row"><span class="bar-label">${u}</span><div class="bar-track"><div class="bar-fill" style="width:${Math.round(v/maxU*100)}%;background:var(--steel3)"></div></div><span class="bar-count">${v}</span></div>`).join(''):'<p class="empty">sem dados de UF</p>';
 
-  // ligações por dia (quando filtro de data ativo)
   const diasEl=document.getElementById('ch-dias');
   if(diasEl){
     if(dIni||dFim){
       const dC={};
       ligs.forEach(l=>{if(l.data){dC[l.data]=(dC[l.data]||0)+1;}});
-      const dias=Object.entries(dC).sort((a,b)=>{
-        const da=parseBR(a[0]),db2=parseBR(b[0]);
-        return da-db2;
-      });
-      const maxD=dias[0]?Math.max(...dias.map(d=>d[1])):1;
+      const dias=Object.entries(dC).sort((a,b)=>{const da=parseBR(a[0]),db2=parseBR(b[0]);return da-db2;});
+      const maxD=dias.length?Math.max(...dias.map(d=>d[1])):1;
       diasEl.innerHTML=dias.length?dias.map(([d,v])=>`<div class="bar-row"><span class="bar-label">${d}</span><div class="bar-track"><div class="bar-fill" style="width:${Math.round(v/maxD*100)}%;background:var(--blue)"></div></div><span class="bar-count">${v}</span></div>`).join(''):'<p class="empty">sem ligações no período</p>';
       document.getElementById('card-dias').style.display='block';
     }else{
@@ -1125,6 +1259,9 @@ function renderDash(){
   }
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// IMPORTAR / EXPORTAR
+// ─────────────────────────────────────────────────────────────────────────────
 function importarCSV(input){
   const file=input.files[0];if(!file)return;
   const reader=new FileReader();
@@ -1146,7 +1283,7 @@ function importarCSV(input){
       await api({action:'importClientes',clientes:novos});
       toast(`${novos.length} clientes importados!`,'ok');
     }catch{toast('Erro ao salvar no Sheets','err');}
-    poblarSelects();renderClientes();
+    poblarSelects();renderMsItems();renderClientes();
     document.getElementById('csv-result').innerHTML=`
       <p style="color:var(--green);font-size:13px;margin-bottom:10px;font-weight:600">${novos.length} clientes importados com sucesso</p>
       <div style="background:var(--black3);border-radius:var(--radius);padding:12px;font-size:11px;font-family:'JetBrains Mono',monospace;overflow-x:auto">
@@ -1183,6 +1320,9 @@ function exportarClientes(){
   const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([[h,...rows].join('\n')],{type:'text/csv;charset=utf-8'}));a.download='clientes.csv';a.click();
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// NAVEGAÇÃO
+// ─────────────────────────────────────────────────────────────────────────────
 const pageTitles={clientes:['Clientes','base de contatos'],gestor:['Gestor / Meta','ranking e metas diárias'],dash:['Dashboard','análise de performance'],importar:['Importar CSV','carregar base de clientes'],cad:['Cadastrar','novo cliente na base']};
 
 function showScreen(id,el){
