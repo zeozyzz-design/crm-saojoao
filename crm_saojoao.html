@@ -637,7 +637,7 @@ label:first-child{margin-top:0}
         <div id="dash-filtro-ativo" style="display:none;margin-bottom:10px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--orange);background:var(--orange-dim);border-radius:var(--radius);padding:6px 12px"></div>
         <div class="grid4" id="kpi-cards"></div>
         <div class="grid2" style="margin-bottom:14px">
-          <div class="card" style="min-width:0"><div class="card-title">Funil de Prospecção</div><div id="ch-status"></div></div>
+          <div class="card"><div class="card-title">Status dos clientes</div><div id="ch-status"></div></div>
           <div class="card"><div class="card-title">Motivos de perda</div><div id="ch-motivos"></div></div>
         </div>
         <div class="card" id="card-dias" style="display:none;margin-bottom:14px">
@@ -733,7 +733,12 @@ async function syncAll(){
       api({action:'getMeta'})
     ]);
     db.clientes=clis.map(c=>({...c,id:String(c.id)}));
-    db.ligacoes=ligs.map(l=>({...l,cid:String(l.clienteId),atendeu:l.atendeu==='TRUE'||l.atendeu===true}));
+    db.ligacoes=ligs.map(l=>({
+      ...l,
+      cid:String(l.clienteId),
+      atendeu:l.atendeu==='TRUE'||l.atendeu===true,
+      data:normalizarData(l.data)
+    }));
     db.meta=metaR.meta||50;
     document.getElementById('meta-input').value=db.meta;
     poblarSelects();renderMsItems();renderClientes();renderDash();renderRanking();
@@ -755,12 +760,45 @@ function setSyncStatus(msg,live){
 }
 
 const hoje=()=>new Date().toLocaleDateString('pt-BR');
+
+// Normaliza qualquer formato de data para dd/mm/aaaa
+// Suporta: "dd/mm/aaaa", "aaaa-mm-dd" (ISO), número serial Excel, objetos Date
+function normalizarData(raw){
+  if(!raw && raw!==0) return '';
+  // Número serial Excel (ex: 45384)
+  if(typeof raw === 'number' || (typeof raw === 'string' && /^\d{5}$/.test(raw.trim()))){
+    const serial = parseInt(raw);
+    // Excel epoch: 1 jan 1900 = dia 1 (com bug do ano bissexto)
+    const d = new Date((serial - 25569) * 86400 * 1000);
+    if(!isNaN(d)) return d.toLocaleDateString('pt-BR');
+  }
+  const s = String(raw).trim();
+  // Já está em dd/mm/aaaa
+  if(/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(s)){
+    const [d,m,y] = s.split('/');
+    return d.padStart(2,'0')+'/'+m.padStart(2,'0')+'/'+y;
+  }
+  // Formato ISO aaaa-mm-dd
+  if(/^\d{4}-\d{2}-\d{2}/.test(s)){
+    const [y,m,d] = s.split('T')[0].split('-');
+    return d+'/'+m+'/'+y;
+  }
+  // Formato dd/mm/aa (2 dígitos no ano)
+  if(/^\d{1,2}\/\d{1,2}\/\d{2}$/.test(s)){
+    const [d,m,y] = s.split('/');
+    return d.padStart(2,'0')+'/'+m.padStart(2,'0')+'/'+'20'+y;
+  }
+  // Tenta parse genérico como último recurso
+  const parsed = new Date(s);
+  if(!isNaN(parsed)) return parsed.toLocaleDateString('pt-BR');
+  return s;
+}
 function iniciais(n){return n.split(' ').slice(0,2).map(p=>p[0]).join('').toUpperCase();}
 function getVendedores(){return[...new Set(db.clientes.map(c=>c.vendedor).filter(Boolean))].sort();}
 
-// ── STATUS DIÁRIO: só conta ligações de HOJE ──────────────────────────────────
+// ── STATUS: último resultado registrado de todos os tempos ────────────────────
 function statusUltimo(cid){
-  const ls=db.ligacoes.filter(l=>String(l.cid)===String(cid)&&l.atendeu&&l.resultado&&l.data===hoje());
+  const ls=db.ligacoes.filter(l=>String(l.cid)===String(cid)&&l.atendeu&&l.resultado);
   return ls.length?ls[ls.length-1].resultado:'sem_contato';
 }
 
@@ -1282,7 +1320,10 @@ function renderDash(){
   // ligações filtradas por data de CONTATO
   let ligs=db.ligacoes.filter(l=>{
     if(!ids.has(String(l.cid)))return false;
-    if(dataFiltro && l.data!==dataFiltro)return false;
+    if(dataFiltro){
+      const ld = normalizarData(l.data);
+      if(ld !== dataFiltro) return false;
+    }
     return true;
   });
 
@@ -1295,77 +1336,25 @@ function renderDash(){
   else{fb.style.display='none';}
 
   const total=clis.length;
-
-  // ── Calcula status de cada cliente pelo ÚLTIMO resultado registrado ──────────
-  // Usa TODAS as ligações históricas (sem filtro de data) — status é acumulado
-  const sc={fechado:0,interessado:0,negociacao:0,sem_contato:0,perdido:0};
-  clis.forEach(c=>{
-    const ligsCliente=db.ligacoes.filter(l=>String(l.cid)===String(c.id)&&l.atendeu&&l.resultado);
-    const s=ligsCliente.length?ligsCliente[ligsCliente.length-1].resultado:'sem_contato';
-    sc[s]=(sc[s]||0)+1;
-  });
-
-  // KPIs baseados em clientes únicos (não contagem de ligações)
-  const clientesFechados = sc.fechado;
-  const totalContatos = ligs.length;
-  const taxa = total ? Math.round(clientesFechados/total*100) : 0;
+  const fechados=ligs.filter(l=>l.resultado==='fechado').length;
+  const atendidas=ligs.filter(l=>l.atendeu).length;
+  const taxa=ligs.length?Math.round(fechados/ligs.length*100):0;
 
   document.getElementById('kpi-cards').innerHTML=`
     <div class="metric"><div class="metric-val">${total}</div><div class="metric-label">Clientes</div></div>
-    <div class="metric"><div class="metric-val">${totalContatos}</div><div class="metric-label">Contatos${dataFiltro?' (dia)':''}</div></div>
-    <div class="metric green"><div class="metric-val" style="color:var(--green)">${clientesFechados}</div><div class="metric-label">Fechados</div></div>
+    <div class="metric"><div class="metric-val">${ligs.length}</div><div class="metric-label">Contatos${dataFiltro?' (dia)':''}</div></div>
+    <div class="metric green"><div class="metric-val" style="color:var(--green)">${fechados}</div><div class="metric-label">Fechados</div></div>
     <div class="metric accent"><div class="metric-val" style="color:var(--orange)">${taxa}%</div><div class="metric-label">Conversão</div></div>`;
 
-  // ── Funil de prospecção SVG ──────────────────────────────────────────────────
-  // Topo = fechados (melhor resultado), base = perdidos
-  const funil=[
-    {k:'fechado',    l:'Fechados',      cor:'#34d399',corDim:'rgba(52,211,153,0.15)'},
-    {k:'negociacao', l:'Em Negociação', cor:'#fbbf24',corDim:'rgba(251,191,36,0.15)'},
-    {k:'interessado',l:'Interessados',  cor:'#60a5fa',corDim:'rgba(96,165,250,0.15)'},
-    {k:'sem_contato',l:'Sem Contato',   cor:'#6b7080',corDim:'rgba(107,112,128,0.15)'},
-    {k:'perdido',    l:'Perdidos',      cor:'#f87171',corDim:'rgba(248,113,113,0.15)'},
-  ];
-  const maxFunil=Math.max(...funil.map(f=>sc[f.k]||0),1);
-  const W=440,ROW=58,GAP=5,PAD=24,H=funil.length*(ROW+GAP)+PAD*2;
-
-  let svgRows='';
-  funil.forEach((f,i)=>{
-    const val=sc[f.k]||0;
-    const pct=val/maxFunil;
-    const minW=W*0.10;
-    const rowW=Math.round(minW+(W-PAD*2-minW)*pct);
-    const x=(W-rowW)/2;
-    const y=PAD+i*(ROW+GAP);
-    const nextF=funil[i+1];
-    const nextVal=nextF?(sc[nextF.k]||0):0;
-    const nextPct=nextVal/maxFunil;
-    const nextW=Math.round(minW+(W-PAD*2-minW)*nextPct);
-    const nextX=(W-nextW)/2;
-    // Trapézio: topo desta fatia = rowW, base = nextW (ou ligeiramente menor para o último)
-    const x1t=x, x2t=x+rowW;
-    const x1b=nextF?nextX:x+4, x2b=nextF?nextX+nextW:x+rowW-4;
-    const yt=y, yb=y+ROW;
-    const opacity=val>0?1:0.35;
-    svgRows+=`
-      <g opacity="${opacity}">
-        <polygon points="${x1t},${yt} ${x2t},${yt} ${x2b},${yb} ${x1b},${yb}"
-          fill="${f.corDim}" stroke="${f.cor}" stroke-width="1.5"/>
-        <text x="${W/2}" y="${yt+ROW/2-9}" text-anchor="middle"
-          font-family="Barlow Condensed,sans-serif" font-size="11" font-weight="600"
-          letter-spacing="1.5" fill="${f.cor}">${f.l.toUpperCase()}</text>
-        <text x="${W/2}" y="${yt+ROW/2+12}" text-anchor="middle"
-          font-family="Barlow Condensed,sans-serif" font-size="24" font-weight="700"
-          fill="#f0f1f3">${val}</text>
-        <text x="${W-PAD+2}" y="${yt+ROW/2+5}" text-anchor="end"
-          font-family="JetBrains Mono,monospace" font-size="9"
-          fill="#6b7080">${total>0?Math.round(val/total*100):0}%</text>
-      </g>`;
+  const sc={interessado:0,negociacao:0,fechado:0,perdido:0,sem_contato:0};
+  clis.forEach(c=>{
+    const ligsCliente=ligs.filter(l=>String(l.cid)===String(c.id)&&l.atendeu&&l.resultado);
+    const s=ligsCliente.length?ligsCliente[ligsCliente.length-1].resultado:'sem_contato';
+    sc[s]=(sc[s]||0)+1;
   });
-
-  const svgFunil=`<svg viewBox="0 0 ${W} ${H}" width="100%" xmlns="http://www.w3.org/2000/svg"
-    style="display:block;max-width:460px;margin:0 auto;overflow:visible">${svgRows}</svg>`;
-
-  document.getElementById('ch-status').innerHTML=total?svgFunil:'<p class="empty">sem dados</p>';
+  const scL={interessado:'Interessado',negociacao:'Em negociação',fechado:'Fechado',perdido:'Perdido',sem_contato:'Sem contato'};
+  const scC={interessado:'var(--blue)',negociacao:'var(--amber)',fechado:'var(--green)',perdido:'var(--red)',sem_contato:'var(--steel)'};
+  document.getElementById('ch-status').innerHTML=total?Object.entries(sc).filter(([,v])=>v>0).map(([k,v])=>`<div class="bar-row"><span class="bar-label">${scL[k]}</span><div class="bar-track"><div class="bar-fill" style="width:${Math.round(v/total*100)}%;background:${scC[k]}"></div></div><span class="bar-count">${v}</span></div>`).join(''):'<p class="empty">sem dados</p>';
 
   const perdidos=ligs.filter(l=>l.resultado==='perdido');
   const mc={preco:0,prazo:0,outro:0};
