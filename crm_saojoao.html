@@ -733,7 +733,12 @@ async function syncAll(){
       api({action:'getMeta'})
     ]);
     db.clientes=clis.map(c=>({...c,id:String(c.id)}));
-    db.ligacoes=ligs.map(l=>({...l,cid:String(l.clienteId),atendeu:l.atendeu==='TRUE'||l.atendeu===true}));
+    db.ligacoes=ligs.map(l=>({
+      ...l,
+      cid:String(l.clienteId),
+      atendeu:l.atendeu==='TRUE'||l.atendeu===true,
+      data:normalizarData(l.data)
+    }));
     db.meta=metaR.meta||50;
     document.getElementById('meta-input').value=db.meta;
     poblarSelects();renderMsItems();renderClientes();renderDash();renderRanking();
@@ -755,12 +760,45 @@ function setSyncStatus(msg,live){
 }
 
 const hoje=()=>new Date().toLocaleDateString('pt-BR');
+
+// Normaliza qualquer formato de data para dd/mm/aaaa
+// Suporta: "dd/mm/aaaa", "aaaa-mm-dd" (ISO), número serial Excel, objetos Date
+function normalizarData(raw){
+  if(!raw && raw!==0) return '';
+  // Número serial Excel (ex: 45384)
+  if(typeof raw === 'number' || (typeof raw === 'string' && /^\d{5}$/.test(raw.trim()))){
+    const serial = parseInt(raw);
+    // Excel epoch: 1 jan 1900 = dia 1 (com bug do ano bissexto)
+    const d = new Date((serial - 25569) * 86400 * 1000);
+    if(!isNaN(d)) return d.toLocaleDateString('pt-BR');
+  }
+  const s = String(raw).trim();
+  // Já está em dd/mm/aaaa
+  if(/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(s)){
+    const [d,m,y] = s.split('/');
+    return d.padStart(2,'0')+'/'+m.padStart(2,'0')+'/'+y;
+  }
+  // Formato ISO aaaa-mm-dd
+  if(/^\d{4}-\d{2}-\d{2}/.test(s)){
+    const [y,m,d] = s.split('T')[0].split('-');
+    return d+'/'+m+'/'+y;
+  }
+  // Formato dd/mm/aa (2 dígitos no ano)
+  if(/^\d{1,2}\/\d{1,2}\/\d{2}$/.test(s)){
+    const [d,m,y] = s.split('/');
+    return d.padStart(2,'0')+'/'+m.padStart(2,'0')+'/'+'20'+y;
+  }
+  // Tenta parse genérico como último recurso
+  const parsed = new Date(s);
+  if(!isNaN(parsed)) return parsed.toLocaleDateString('pt-BR');
+  return s;
+}
 function iniciais(n){return n.split(' ').slice(0,2).map(p=>p[0]).join('').toUpperCase();}
 function getVendedores(){return[...new Set(db.clientes.map(c=>c.vendedor).filter(Boolean))].sort();}
 
-// ── STATUS DIÁRIO: só conta ligações de HOJE ──────────────────────────────────
+// ── STATUS: último resultado registrado de todos os tempos ────────────────────
 function statusUltimo(cid){
-  const ls=db.ligacoes.filter(l=>String(l.cid)===String(cid)&&l.atendeu&&l.resultado&&l.data===hoje());
+  const ls=db.ligacoes.filter(l=>String(l.cid)===String(cid)&&l.atendeu&&l.resultado);
   return ls.length?ls[ls.length-1].resultado:'sem_contato';
 }
 
@@ -1282,7 +1320,10 @@ function renderDash(){
   // ligações filtradas por data de CONTATO
   let ligs=db.ligacoes.filter(l=>{
     if(!ids.has(String(l.cid)))return false;
-    if(dataFiltro && l.data!==dataFiltro)return false;
+    if(dataFiltro){
+      const ld = normalizarData(l.data);
+      if(ld !== dataFiltro) return false;
+    }
     return true;
   });
 
