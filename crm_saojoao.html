@@ -395,16 +395,29 @@ label:first-child{margin-top:0}
 <!-- MODAL LIGAÇÃO -->
 <div id="modal-lig" class="modal-overlay" style="display:none">
   <div class="modal">
-    <div class="modal-title" id="ml-titulo">Registrar Ligação</div>
+    <div class="modal-title" id="ml-titulo">Registrar Contato</div>
     <div class="modal-sub" id="ml-sub" style="margin-top:4px"></div>
-    <div style="font-size:12px;color:var(--text3);margin-bottom:8px">A ligação foi atendida?</div>
+
+    <div style="font-size:11px;color:var(--steel2);text-transform:uppercase;letter-spacing:1px;font-family:'JetBrains Mono',monospace;margin-bottom:6px">Canal de contato</div>
+    <div class="qbtns" style="margin-bottom:14px">
+      <button class="qbtn" id="canal-ligacao" onclick="setCanal('ligacao')">📞 Ligação</button>
+      <button class="qbtn" id="canal-whatsapp" onclick="setCanal('whatsapp')">💬 WhatsApp</button>
+      <button class="qbtn" id="canal-visita" onclick="setCanal('visita')">🤝 Visita</button>
+    </div>
+
+    <label style="margin-top:0">Vendedor que fez o contato</label>
+    <select id="ml-vendedor">
+      <option value="">Selecione o vendedor</option>
+    </select>
+
+    <div style="font-size:11px;color:var(--steel2);text-transform:uppercase;letter-spacing:1px;font-family:'JetBrains Mono',monospace;margin:14px 0 6px">O contato foi atendido?</div>
     <div class="qbtns">
       <button class="qbtn" id="btn-sim" onclick="setAtendeu(true)">✓ Atendeu</button>
       <button class="qbtn" id="btn-nao" onclick="setAtendeu(false)">✗ Não atendeu</button>
     </div>
     <div id="res-section" style="display:none">
-      <div style="font-size:12px;color:var(--text3);margin:12px 0 8px">Resultado da conversa:</div>
-      <div class="qbtns" id="res-btns"></div>
+      <div style="font-size:11px;color:var(--steel2);text-transform:uppercase;letter-spacing:1px;font-family:'JetBrains Mono',monospace;margin:14px 0 6px">Resultado da conversa</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:0" id="res-btns"></div>
       <div id="motivo-section" style="display:none">
         <label>Motivo da perda</label>
         <select id="ml-motivo">
@@ -418,7 +431,7 @@ label:first-child{margin-top:0}
     </div>
     <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:18px">
       <button class="btn btn-sm" onclick="closeModal('modal-lig')">Cancelar</button>
-      <button class="btn btn-primary btn-sm" onclick="confirmarLig()">Salvar ligação</button>
+      <button class="btn btn-primary btn-sm" onclick="confirmarLig()">Salvar</button>
     </div>
   </div>
 </div>
@@ -616,14 +629,10 @@ label:first-child{margin-top:0}
           <select id="dash-vend" onchange="renderDash()" style="max-width:180px"><option value="">Toda a equipe</option></select>
           <select id="dash-cidade" onchange="renderDash()" style="max-width:180px"><option value="">Todas as cidades</option></select>
           <div style="display:flex;flex-direction:column;gap:3px">
-            <span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--steel2);text-transform:uppercase;letter-spacing:1px">Data inicial</span>
-            <input type="date" id="dash-data-ini" onchange="renderDash()" style="width:150px;padding:7px 10px;font-size:12px">
+            <span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--steel2);text-transform:uppercase;letter-spacing:1px">Data</span>
+            <input type="date" id="dash-data-unica" onchange="renderDash()" style="width:160px;padding:7px 10px;font-size:12px">
           </div>
-          <div style="display:flex;flex-direction:column;gap:3px">
-            <span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--steel2);text-transform:uppercase;letter-spacing:1px">Data final</span>
-            <input type="date" id="dash-data-fim" onchange="renderDash()" style="width:150px;padding:7px 10px;font-size:12px">
-          </div>
-          <button class="btn btn-sm" onclick="limparFiltrosDash()" style="align-self:flex-end">Limpar filtros</button>
+          <button class="btn btn-sm" onclick="limparFiltrosDash()" style="align-self:flex-end">Limpar</button>
         </div>
         <div id="dash-filtro-ativo" style="display:none;margin-bottom:10px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--orange);background:var(--orange-dim);border-radius:var(--radius);padding:6px 12px"></div>
         <div class="grid4" id="kpi-cards"></div>
@@ -749,9 +758,9 @@ const hoje=()=>new Date().toLocaleDateString('pt-BR');
 function iniciais(n){return n.split(' ').slice(0,2).map(p=>p[0]).join('').toUpperCase();}
 function getVendedores(){return[...new Set(db.clientes.map(c=>c.vendedor).filter(Boolean))].sort();}
 
-// ── STATUS: apenas conta se a ligação foi atendida E tem resultado ──────────
+// ── STATUS DIÁRIO: só conta ligações de HOJE ──────────────────────────────────
 function statusUltimo(cid){
-  const ls=db.ligacoes.filter(l=>String(l.cid)===String(cid)&&l.atendeu&&l.resultado);
+  const ls=db.ligacoes.filter(l=>String(l.cid)===String(cid)&&l.atendeu&&l.resultado&&l.data===hoje());
   return ls.length?ls[ls.length-1].resultado:'sem_contato';
 }
 
@@ -1032,11 +1041,42 @@ function executarExclusao(){
 // ─────────────────────────────────────────────────────────────────────────────
 // LIGAÇÕES
 // ─────────────────────────────────────────────────────────────────────────────
+let canalSel = null;
+
+function poblarVendedoresModal(){
+  const vs = getVendedores();
+  const el = document.getElementById('ml-vendedor');
+  if(!el) return;
+  const val = el.value;
+  el.innerHTML = '<option value="">Selecione o vendedor</option>' +
+    vs.map(v=>`<option value="${v}">${v}</option>`).join('');
+  // tenta manter o vendedor anterior
+  if(val) el.value = val;
+}
+
+function setCanal(c){
+  canalSel = c;
+  ['ligacao','whatsapp','visita'].forEach(id=>{
+    document.getElementById('canal-'+id).classList.toggle('sel', id===c);
+  });
+}
+
 function abrirLig(cid){
-  modalCliId=cid;atendeuSel=null;resultadoSel=null;
+  modalCliId=cid; atendeuSel=null; resultadoSel=null; canalSel=null;
   const cli=db.clientes.find(c=>String(c.id)===String(cid));
-  document.getElementById('ml-titulo').textContent='Registrar Ligação';
+  document.getElementById('ml-titulo').textContent='Registrar Contato';
   document.getElementById('ml-sub').textContent=cli?cli.nome:'';
+  // reset canal
+  ['ligacao','whatsapp','visita'].forEach(id=>document.getElementById('canal-'+id).classList.remove('sel'));
+  // pré-seleciona ligação como padrão
+  setCanal('ligacao');
+  // vendedores
+  poblarVendedoresModal();
+  // pré-seleciona o vendedor do cliente
+  if(cli && cli.vendedor){
+    const sel = document.getElementById('ml-vendedor');
+    sel.value = cli.vendedor;
+  }
   document.getElementById('btn-sim').classList.remove('sel');
   document.getElementById('btn-nao').classList.remove('sel');
   document.getElementById('res-section').style.display='none';
@@ -1054,11 +1094,11 @@ function setAtendeu(v){
   const rs=document.getElementById('res-section');
   if(!v){rs.style.display='none';resultadoSel='nao_atendeu';}
   else{
-    rs.style.display='block';resultadoSel=null;
+    rs.style.display='block'; resultadoSel=null;
     document.getElementById('res-btns').innerHTML=[
       {v:'interessado',l:'Interessado'},{v:'negociacao',l:'Em negociação'},
       {v:'fechado',l:'Fechado'},{v:'perdido',l:'Perdido'}
-    ].map(b=>`<button class="qbtn" id="rb-${b.v}" onclick="setRes('${b.v}')">${b.l}</button>`).join('');
+    ].map(b=>`<button class="qbtn" id="rb-${b.v}" onclick="setRes('${b.v}')" style="min-width:0;width:100%">${b.l}</button>`).join('');
     document.getElementById('motivo-section').style.display='none';
   }
 }
@@ -1069,19 +1109,47 @@ function setRes(v){
   document.getElementById('motivo-section').style.display=v==='perdido'?'block':'none';
 }
 function confirmarLig(){
+  if(!canalSel){toast('Selecione o canal de contato.','err');return;}
+  const vendedorSel = document.getElementById('ml-vendedor').value;
+  if(!vendedorSel){toast('Selecione o vendedor.','err');return;}
   if(atendeuSel===null){toast('Informe se atendeu.','err');return;}
   if(atendeuSel&&!resultadoSel){toast('Informe o resultado.','err');return;}
   const cli=db.clientes.find(c=>String(c.id)===String(modalCliId))||{};
-  const lig={id:String(Date.now()),cid:String(modalCliId),clienteId:String(modalCliId),atendeu:atendeuSel,resultado:resultadoSel,motivo:resultadoSel==='perdido'?document.getElementById('ml-motivo').value:'',obs:document.getElementById('ml-obs').value.trim(),data:hoje(),hora:new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}),vendedor:cli.vendedor||'',cidade:cli.cidade||'',uf:cli.uf||''};
+  const lig={
+    id:String(Date.now()),
+    cid:String(modalCliId),
+    clienteId:String(modalCliId),
+    canal:canalSel,
+    vendedor:vendedorSel,
+    atendeu:atendeuSel,
+    resultado:resultadoSel,
+    motivo:resultadoSel==='perdido'?document.getElementById('ml-motivo').value:'',
+    obs:document.getElementById('ml-obs').value.trim(),
+    data:hoje(),
+    hora:new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}),
+    cidade:cli.cidade||'',
+    uf:cli.uf||''
+  };
   db.ligacoes.push(lig);
-  api({action:'addLigacao',ligacao:lig}).then(()=>toast('Ligação salva no Sheets!','ok')).catch(()=>toast('Erro ao salvar','err'));
+  api({action:'addLigacao',ligacao:lig}).then(()=>toast('Contato salvo no Sheets!','ok')).catch(()=>toast('Erro ao salvar','err'));
   closeModal('modal-lig');
   renderClientes();renderDash();renderRanking();
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// DETALHE CLIENTE
+// DETALHE CLIENTE — histórico compacto
 // ─────────────────────────────────────────────────────────────────────────────
+const canalIcon={ligacao:'📞',whatsapp:'💬',visita:'🤝'};
+const canalLabel={ligacao:'Ligação',whatsapp:'WhatsApp',visita:'Visita'};
+
+function fmtDataHist(data, hora){
+  // dd/mm/aaaa → dd/mm/aa
+  if(!data) return '—';
+  const p = data.split('/');
+  const d = p.length===3 ? p[0]+'/'+p[1]+'/'+p[2].slice(-2) : data;
+  return d + (hora?' '+hora:'');
+}
+
 function abrirDetalhe(cid){
   modalCliId=cid;
   const cli=db.clientes.find(c=>String(c.id)===String(cid));
@@ -1094,8 +1162,26 @@ function abrirDetalhe(cid){
       <span style="font-size:10px;background:rgba(255,255,255,.05);border-radius:4px;padding:2px 8px;color:var(--steel2);font-family:'JetBrains Mono',monospace">${cli.vendedor||'—'}</span>
     </div>
     <p style="font-size:11px;color:var(--text3);font-family:'JetBrains Mono',monospace">${cli.telefone||''} ${[cli.cidade,cli.uf].filter(Boolean).join(' / ')}</p>`;
+
   const ligs=db.ligacoes.filter(l=>String(l.cid)===String(cid)).slice().reverse();
-  document.getElementById('dc-hist').innerHTML=ligs.length?ligs.map(l=>`<div class="hist-item"><span class="hist-time">${l.data} ${l.hora}</span><div style="flex:1">${l.atendeu?badgeStatus(l.resultado):'<span class="badge b-cinza">Não atendeu</span>'}${l.motivo?` <span style="font-size:10px;color:var(--text3)">${{preco:'Preço',prazo:'Prazo',outro:'Outro'}[l.motivo]||''}</span>`:''}${l.obs?`<p style="font-size:11px;color:var(--text3);margin-top:3px">${l.obs}</p>`:''}</div></div>`).join(''):'<p class="empty" style="padding:1rem">nenhuma ligação registrada</p>';
+  document.getElementById('dc-hist').innerHTML = ligs.length ? ligs.map(l=>{
+    const ic = canalIcon[l.canal] || '📞';
+    const vend = l.vendedor || cli.vendedor || '—';
+    const statusBadge = l.atendeu ? badgeStatus(l.resultado) : '<span class="badge b-cinza">Não atendeu</span>';
+    const motivoStr = l.motivo ? ` · <span style="color:var(--text3)">${{preco:'Preço',prazo:'Prazo',outro:'Outro'}[l.motivo]||''}</span>` : '';
+    const obsStr = l.obs ? `<div style="font-size:11px;color:var(--text3);margin-top:3px;padding-left:2px">${l.obs}</div>` : '';
+    return `<div class="hist-item">
+      <div style="min-width:120px;flex-shrink:0">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text2)">${fmtDataHist(l.data,l.hora)}</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:2px">${ic} ${vend}</div>
+      </div>
+      <div style="flex:1;min-width:0">
+        <div>${statusBadge}${motivoStr}</div>
+        ${obsStr}
+      </div>
+    </div>`;
+  }).join('') : '<p class="empty" style="padding:1rem">nenhuma ligação registrada</p>';
+
   document.getElementById('modal-cli').style.display='flex';
 }
 
@@ -1113,20 +1199,20 @@ async function salvarMeta(){
 
 function renderRanking(){
   const meta=db.meta||50;
-  document.getElementById('meta-info').textContent=`meta atual: ${meta} ligações / vendedor · ${hoje()}`;
+  document.getElementById('meta-info').textContent=`meta atual: ${meta} contatos / vendedor · ${hoje()}`;
   const vs=getVendedores();
   if(!vs.length){document.getElementById('ranking').innerHTML='<p class="empty">nenhum vendedor na base ainda</p>';return;}
   const rows=vs.map(v=>{
-    const ligsHoje=db.ligacoes.filter(l=>{
-      const cli=db.clientes.find(c=>String(c.id)===String(l.cid));
-      return cli&&cli.vendedor===v&&l.data===hoje();
-    });
+    // conta pelas ligações onde o VENDEDOR DA LIGAÇÃO (não do cadastro) é "v"
+    const ligsHoje=db.ligacoes.filter(l=>l.vendedor===v&&l.data===hoje());
     const total=ligsHoje.length;
     const atendidas=ligsHoje.filter(l=>l.atendeu).length;
     const fechados=ligsHoje.filter(l=>l.resultado==='fechado').length;
+    const whats=ligsHoje.filter(l=>l.canal==='whatsapp').length;
+    const visitas=ligsHoje.filter(l=>l.canal==='visita').length;
     const pct=Math.min(Math.round(total/meta*100),100);
     const st=total>=meta?'ok':total>=meta*0.7?'par':'no';
-    return{v,total,atendidas,fechados,pct,st};
+    return{v,total,atendidas,fechados,whats,visitas,pct,st};
   }).sort((a,b)=>b.total-a.total);
 
   const numClass=(i)=>i===0?'gold':i===1?'silver':i===2?'bronze':'';
@@ -1135,7 +1221,7 @@ function renderRanking(){
       <span class="rank-num ${numClass(i)}">${i+1}</span>
       <div style="flex:1;min-width:0">
         <div class="rank-name">${r.v}</div>
-        <div class="rank-sub">${r.total} ligações · ${r.atendidas} atendidas · ${r.fechados} fechados</div>
+        <div class="rank-sub">${r.total} contatos · ${r.atendidas} atendidos · ${r.fechados} fechados · 💬${r.whats} · 🤝${r.visitas}</div>
         <div style="display:flex;align-items:center;gap:8px;margin-top:5px">
           <div class="rank-bar-wrap"><div class="rank-bar" style="width:${r.pct}%;background:${r.st==='ok'?'var(--green)':r.st==='par'?'var(--amber)':'var(--red)'}"></div></div>
           <span style="font-size:10px;color:var(--text3);font-family:'JetBrains Mono',monospace">${r.pct}%</span>
@@ -1162,8 +1248,7 @@ function parseISO(d){
 function limparFiltrosDash(){
   document.getElementById('dash-vend').value='';
   document.getElementById('dash-cidade').value='';
-  document.getElementById('dash-data-ini').value='';
-  document.getElementById('dash-data-fim').value='';
+  document.getElementById('dash-data-unica').value='';
   renderDash();
 }
 function poblarCidades(){
@@ -1179,28 +1264,32 @@ function renderDash(){
   poblarCidades();
   const vend=document.getElementById('dash-vend').value;
   const cidade=document.getElementById('dash-cidade').value;
-  const dIni=parseISO(document.getElementById('dash-data-ini').value);
-  const dFim=parseISO(document.getElementById('dash-data-fim').value);
+  const dataUnica=document.getElementById('dash-data-unica').value; // yyyy-mm-dd
+  // converte para dd/mm/aaaa para comparar com l.data
+  let dataFiltro='';
+  if(dataUnica){
+    const p=dataUnica.split('-');
+    dataFiltro=p[2]+'/'+p[1]+'/'+p[0];
+  }
+
   let clis=db.clientes.filter(c=>{
     const vOk=!vend||c.vendedor===vend;
     const cOk=!cidade||(c.cidade||'').trim()===cidade;
     return vOk&&cOk;
   });
   const ids=new Set(clis.map(c=>String(c.id)));
+
+  // ligações filtradas por data de CONTATO
   let ligs=db.ligacoes.filter(l=>{
     if(!ids.has(String(l.cid)))return false;
-    if(dIni||dFim){
-      const ld=parseBR(l.data);if(!ld)return false;
-      if(dIni&&ld<dIni)return false;
-      if(dFim&&ld>dFim)return false;
-    }
+    if(dataFiltro && l.data!==dataFiltro)return false;
     return true;
   });
+
   const filtros=[];
   if(vend)filtros.push('Vendedor: '+vend);
   if(cidade)filtros.push('Cidade: '+cidade);
-  if(dIni)filtros.push('De: '+document.getElementById('dash-data-ini').value.split('-').reverse().join('/'));
-  if(dFim)filtros.push('Até: '+document.getElementById('dash-data-fim').value.split('-').reverse().join('/'));
+  if(dataFiltro)filtros.push('Dia: '+dataFiltro);
   const fb=document.getElementById('dash-filtro-ativo');
   if(filtros.length){fb.style.display='block';fb.textContent='Filtros ativos: '+filtros.join(' · ');}
   else{fb.style.display='none';}
@@ -1212,7 +1301,7 @@ function renderDash(){
 
   document.getElementById('kpi-cards').innerHTML=`
     <div class="metric"><div class="metric-val">${total}</div><div class="metric-label">Clientes</div></div>
-    <div class="metric"><div class="metric-val">${ligs.length}</div><div class="metric-label">Ligações</div></div>
+    <div class="metric"><div class="metric-val">${ligs.length}</div><div class="metric-label">Contatos${dataFiltro?' (dia)':''}</div></div>
     <div class="metric green"><div class="metric-val" style="color:var(--green)">${fechados}</div><div class="metric-label">Fechados</div></div>
     <div class="metric accent"><div class="metric-val" style="color:var(--orange)">${taxa}%</div><div class="metric-label">Conversão</div></div>`;
 
@@ -1244,15 +1333,19 @@ function renderDash(){
   const maxU=ufs[0]?ufs[0][1]:1;
   document.getElementById('ch-ufs').innerHTML=ufs.length?ufs.map(([u,v])=>`<div class="bar-row"><span class="bar-label">${u}</span><div class="bar-track"><div class="bar-fill" style="width:${Math.round(v/maxU*100)}%;background:var(--steel3)"></div></div><span class="bar-count">${v}</span></div>`).join(''):'<p class="empty">sem dados de UF</p>';
 
+  // canal breakdown quando há filtro
   const diasEl=document.getElementById('ch-dias');
   if(diasEl){
-    if(dIni||dFim){
-      const dC={};
-      ligs.forEach(l=>{if(l.data){dC[l.data]=(dC[l.data]||0)+1;}});
-      const dias=Object.entries(dC).sort((a,b)=>{const da=parseBR(a[0]),db2=parseBR(b[0]);return da-db2;});
-      const maxD=dias.length?Math.max(...dias.map(d=>d[1])):1;
-      diasEl.innerHTML=dias.length?dias.map(([d,v])=>`<div class="bar-row"><span class="bar-label">${d}</span><div class="bar-track"><div class="bar-fill" style="width:${Math.round(v/maxD*100)}%;background:var(--blue)"></div></div><span class="bar-count">${v}</span></div>`).join(''):'<p class="empty">sem ligações no período</p>';
+    if(dataFiltro){
+      const canaisC={ligacao:0,whatsapp:0,visita:0};
+      ligs.forEach(l=>{ canaisC[l.canal||'ligacao']=(canaisC[l.canal||'ligacao']||0)+1; });
+      const tot=ligs.length||1;
+      diasEl.innerHTML=`
+        <div class="bar-row"><span class="bar-label">📞 Ligações</span><div class="bar-track"><div class="bar-fill" style="width:${Math.round(canaisC.ligacao/tot*100)}%;background:var(--blue)"></div></div><span class="bar-count">${canaisC.ligacao}</span></div>
+        <div class="bar-row"><span class="bar-label">💬 WhatsApp</span><div class="bar-track"><div class="bar-fill" style="width:${Math.round(canaisC.whatsapp/tot*100)}%;background:var(--green)"></div></div><span class="bar-count">${canaisC.whatsapp}</span></div>
+        <div class="bar-row"><span class="bar-label">🤝 Visitas</span><div class="bar-track"><div class="bar-fill" style="width:${Math.round(canaisC.visita/tot*100)}%;background:var(--orange)"></div></div><span class="bar-count">${canaisC.visita}</span></div>`;
       document.getElementById('card-dias').style.display='block';
+      document.getElementById('card-dias').querySelector('.card-title').innerHTML='<span style="width:3px;height:12px;background:var(--orange);border-radius:2px;flex-shrink:0;display:inline-block;margin-right:8px"></span>Contatos por canal — '+dataFiltro;
     }else{
       document.getElementById('card-dias').style.display='none';
     }
@@ -1303,10 +1396,10 @@ function baixarModelo(){
 }
 
 function exportarLigacoes(){
-  const h='cliente,vendedor,cidade,uf,data,hora,atendeu,resultado,motivo,observacao';
+  const h='cliente,vendedor_contato,canal,cidade,uf,data,hora,atendeu,resultado,motivo,observacao';
   const rows=db.ligacoes.map(l=>{
     const cli=db.clientes.find(c=>String(c.id)===String(l.cid))||{};
-    return[cli.nome||'',cli.vendedor||'',cli.cidade||'',cli.uf||'',l.data,l.hora,l.atendeu?'Sim':'Não',l.resultado||'',l.motivo||'',l.obs||''].map(v=>`"${v}"`).join(',');
+    return[cli.nome||'',l.vendedor||'',l.canal||'ligacao',cli.cidade||'',cli.uf||'',l.data,l.hora,l.atendeu?'Sim':'Não',l.resultado||'',l.motivo||'',l.obs||''].map(v=>`"${v}"`).join(',');
   });
   const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([[h,...rows].join('\n')],{type:'text/csv;charset=utf-8'}));a.download='ligacoes.csv';a.click();
 }
