@@ -901,19 +901,40 @@ function renderClientes(){
     const inativo=isInativo(c.id);
     const diasStr=dias===null?'sem contato':dias===0?'hoje':`há ${dias}d`;
     const endStr=[c.bairro,c.cidade,c.uf].filter(Boolean).join('/');
-    return`<div class="cli-row" onclick="abrirDetalhe('${c.id}')">
+    const idEsc=String(c.id).replace(/"/g,'&quot;');
+    return`<div class="cli-row" data-cid="${idEsc}">
       <div class="avatar ${inativo?'av-cinza':avCor(s)}">${iniciais(c.nome)}</div>
       <div style="flex:1;min-width:0">
         <div class="cli-name">${c.nome}&nbsp;&nbsp;${inativo?'<span class="badge" style="background:var(--amber-dim);color:var(--amber)">Inativo</span>':badgeStatus(s)}</div>
         <div class="cli-sub">${endStr||'—'} · ${c.vendedor||'—'} · ${tl} lig · ${ul?ul.data+' ('+diasStr+')':'sem contato'}</div>
       </div>
-      <div style="display:flex;gap:5px;align-items:center" onclick="event.stopPropagation()">
-        <button class="btn btn-sm" onclick="abrirEdicao('${c.id}')">✎</button>
-        <button class="btn btn-purple btn-sm" onclick="abrirAgendamento('${c.id}')">📅</button>
-        <button class="btn btn-primary btn-sm" onclick="abrirLig('${c.id}')">+ Lig.</button>
+      <div class="cli-row-actions" style="display:flex;gap:5px;align-items:center">
+        <button class="btn btn-sm" data-action="editar" data-cid="${idEsc}">✎</button>
+        <button class="btn btn-purple btn-sm" data-action="agendar" data-cid="${idEsc}">📅</button>
+        <button class="btn btn-primary btn-sm" data-action="lig" data-cid="${idEsc}">+ Lig.</button>
       </div>
     </div>`;
   }).join('');
+
+  // Delegação de eventos — garante que o ID correto sempre vem do data-cid do elemento
+  el.querySelectorAll('.cli-row').forEach(row=>{
+    row.addEventListener('click',function(e){
+      // Se clicou em botão de ação, não abre detalhe
+      const btn=e.target.closest('[data-action]');
+      if(btn){
+        e.stopPropagation();
+        const cid=btn.getAttribute('data-cid');
+        const action=btn.getAttribute('data-action');
+        if(action==='editar')abrirEdicao(cid);
+        else if(action==='agendar')abrirAgendamento(cid);
+        else if(action==='lig')abrirLig(cid);
+        return;
+      }
+      // Clique na linha → abre detalhe usando data-cid da própria linha
+      const cid=this.getAttribute('data-cid');
+      if(cid)abrirDetalhe(cid);
+    });
+  });
 }
 
 // ── CADASTRAR ─────────────────────────────────────────────────────────────────
