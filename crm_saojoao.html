@@ -334,6 +334,10 @@ label:first-child{margin-top:0}
       <div><label>Telefone</label><input id="e-tel" placeholder="(35) 99999-0000"></div>
     </div>
     <div class="grid2">
+      <div><label>Endereço</label><input id="e-endereco" placeholder="Rua das Flores, 123"></div>
+      <div><label>Bairro</label><input id="e-bairro" placeholder="Centro"></div>
+    </div>
+    <div class="grid2">
       <div><label>Cidade</label><input id="e-cidade" placeholder="Pouso Alegre"></div>
       <div><label>UF</label>
         <select id="e-uf"><option value="">Selecione</option>
@@ -489,7 +493,12 @@ label:first-child{margin-top:0}
               </div>
             </div>
           </div>
-          <button class="btn btn-sm" id="btn-inativos" onclick="toggleInativos()" style="white-space:nowrap">⚠ Inativos</button>
+          <div style="display:flex;flex-direction:column;gap:3px">
+            <span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--steel2);text-transform:uppercase;letter-spacing:1px">Cadastrado em</span>
+            <input type="date" id="fil-data-cad" onchange="renderClientes()" style="width:148px;padding:7px 10px;font-size:12px">
+          </div>
+          <button class="btn btn-sm" onclick="limparFiltrosClientes()" style="white-space:nowrap;align-self:flex-end">Limpar</button>
+          <button class="btn btn-sm" id="btn-inativos" onclick="toggleInativos()" style="white-space:nowrap;align-self:flex-end">⚠ Inativos</button>
         </div>
         <div id="lista-info" style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text3);margin-bottom:8px"></div>
         <div id="inativo-banner" class="inativo-banner"></div>
@@ -592,6 +601,10 @@ label:first-child{margin-top:0}
           <div class="grid2">
             <div><label>Nome</label><input id="c-nome" placeholder="João Silva"></div>
             <div><label>Telefone</label><input id="c-tel" placeholder="(35) 99999-0000"></div>
+          </div>
+          <div class="grid2">
+            <div><label>Endereço</label><input id="c-endereco" placeholder="Rua das Flores, 123"></div>
+            <div><label>Bairro</label><input id="c-bairro" placeholder="Centro"></div>
           </div>
           <div class="grid2">
             <div><label>Cidade</label><input id="c-cidade" placeholder="Pouso Alegre"></div>
@@ -837,21 +850,38 @@ function toggleInativos(){
   renderClientes();
 }
 
+function limparFiltrosClientes(){
+  document.getElementById('busca').value='';
+  document.getElementById('fil-vend').value='';
+  document.getElementById('fil-status').value='';
+  document.getElementById('fil-data-cad').value='';
+  cidadesSel.clear();
+  mostraInativos=false;
+  document.getElementById('btn-inativos').classList.remove('btn-ghost');
+  document.getElementById('btn-inativos').textContent='⚠ Inativos';
+  renderMsItems();renderClientes();
+}
+
 function renderClientes(){
   poblarSelects();renderMsItems();
   const busca=(document.getElementById('busca').value||'').toLowerCase();
   const vend=document.getElementById('fil-vend').value;
   const fst=document.getElementById('fil-status').value;
+  const filDataRaw=document.getElementById('fil-data-cad').value; // yyyy-mm-dd
+  let filDataBR='';
+  if(filDataRaw){const p=filDataRaw.split('-');filDataBR=p[2]+'/'+p[1]+'/'+p[0];}
   let base=clientesVisiveis();
   let lista=base.filter(c=>{
-    const bOk=(c.nome+' '+(c.telefone||'')).toLowerCase().includes(busca);
+    const bOk=(c.nome+' '+(c.telefone||'')+' '+(c.bairro||'')+' '+(c.endereco||'')).toLowerCase().includes(busca);
     const vOk=!vend||c.vendedor===vend;
     const cOk=cidadesSel.size===0||cidadesSel.has((c.cidade||'').trim());
     const inativo=isInativo(c.id);
-    if(mostraInativos)return bOk&&vOk&&cOk&&inativo;
-    if(fst==='inativo')return bOk&&vOk&&cOk&&inativo;
+    // filtro por data de cadastro
+    const dOk=!filDataBR||(c.dataCadastro&&c.dataCadastro===filDataBR);
+    if(mostraInativos)return bOk&&vOk&&cOk&&inativo&&dOk;
+    if(fst==='inativo')return bOk&&vOk&&cOk&&inativo&&dOk;
     const sOk=!fst||statusUltimo(c.id)===fst;
-    return bOk&&vOk&&cOk&&sOk;
+    return bOk&&vOk&&cOk&&sOk&&dOk;
   });
   const banner=document.getElementById('inativo-banner');
   if(mostraInativos||fst==='inativo'){
@@ -860,7 +890,7 @@ function renderClientes(){
     banner.textContent=`⚠  ${n} cliente${n!==1?'s':''} sem contato há mais de ${DIAS_INATIVO} dias`;
   }else{banner.style.display='none';}
   const info=document.getElementById('lista-info');
-  if(info)info.textContent=lista.length+' cliente'+(lista.length!==1?'s':'')+' encontrado'+(lista.length!==1?'s':'');
+  if(info)info.textContent=lista.length+' cliente'+(lista.length!==1?'s':'')+' encontrado'+(lista.length!==1?'s':'')+(filDataBR?' · cadastro: '+filDataBR:'');
   const el=document.getElementById('lista-cli');
   if(!lista.length){el.innerHTML='<p class="empty">nenhum cliente encontrado</p>';return;}
   el.innerHTML=lista.map(c=>{
@@ -870,11 +900,12 @@ function renderClientes(){
     const dias=diasDesdeUltimaLig(c.id);
     const inativo=isInativo(c.id);
     const diasStr=dias===null?'sem contato':dias===0?'hoje':`há ${dias}d`;
+    const endStr=[c.bairro,c.cidade,c.uf].filter(Boolean).join('/');
     return`<div class="cli-row" onclick="abrirDetalhe('${c.id}')">
       <div class="avatar ${inativo?'av-cinza':avCor(s)}">${iniciais(c.nome)}</div>
       <div style="flex:1;min-width:0">
         <div class="cli-name">${c.nome}&nbsp;&nbsp;${inativo?'<span class="badge" style="background:var(--amber-dim);color:var(--amber)">Inativo</span>':badgeStatus(s)}</div>
-        <div class="cli-sub">${[c.cidade,c.uf].filter(Boolean).join('/')||'—'} · ${c.vendedor||'—'} · ${tl} lig · ${ul?ul.data+' ('+diasStr+')':'sem contato'}</div>
+        <div class="cli-sub">${endStr||'—'} · ${c.vendedor||'—'} · ${tl} lig · ${ul?ul.data+' ('+diasStr+')':'sem contato'}</div>
       </div>
       <div style="display:flex;gap:5px;align-items:center" onclick="event.stopPropagation()">
         <button class="btn btn-sm" onclick="abrirEdicao('${c.id}')">✎</button>
@@ -889,12 +920,23 @@ function renderClientes(){
 function cadastrarCli(){
   const nome=document.getElementById('c-nome').value.trim();
   if(!nome){toast('Informe o nome.','err');return;}
-  const cli={id:String(Date.now()),nome,telefone:document.getElementById('c-tel').value.trim(),cidade:document.getElementById('c-cidade').value.trim(),uf:document.getElementById('c-uf').value,vendedor:document.getElementById('c-vend').value,obs:document.getElementById('c-obs').value.trim()};
+  const cli={
+    id:String(Date.now()),
+    nome,
+    telefone:document.getElementById('c-tel').value.trim(),
+    endereco:document.getElementById('c-endereco').value.trim(),
+    bairro:document.getElementById('c-bairro').value.trim(),
+    cidade:document.getElementById('c-cidade').value.trim(),
+    uf:document.getElementById('c-uf').value,
+    vendedor:document.getElementById('c-vend').value,
+    obs:document.getElementById('c-obs').value.trim(),
+    dataCadastro:hoje()
+  };
   db.clientes.push(cli);
   api({action:'addCliente',cliente:{...cli,tel:cli.telefone}}).then(()=>toast('Cliente salvo!','ok')).catch(()=>toast('Erro ao salvar','err'));
   document.getElementById('cad-ok').style.display='block';
   setTimeout(()=>document.getElementById('cad-ok').style.display='none',2500);
-  ['c-nome','c-tel','c-cidade','c-obs'].forEach(id=>document.getElementById(id).value='');
+  ['c-nome','c-tel','c-endereco','c-bairro','c-cidade','c-obs'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('c-uf').value='';document.getElementById('c-vend').value='';
   poblarSelects();renderMsItems();renderClientes();
 }
@@ -906,6 +948,8 @@ function abrirEdicao(cid){
   document.getElementById('edit-sub').textContent='ID: '+cli.id;
   document.getElementById('e-nome').value=cli.nome||'';
   document.getElementById('e-tel').value=cli.telefone||'';
+  document.getElementById('e-endereco').value=cli.endereco||'';
+  document.getElementById('e-bairro').value=cli.bairro||'';
   document.getElementById('e-cidade').value=cli.cidade||'';
   document.getElementById('e-uf').value=cli.uf||'';
   document.getElementById('e-vend').value=cli.vendedor||'';
@@ -916,12 +960,15 @@ function salvarEdicao(){
   const cli=db.clientes.find(c=>String(c.id)===String(editCliId));if(!cli)return;
   const nome=document.getElementById('e-nome').value.trim();
   if(!nome){toast('Nome obrigatório.','err');return;}
-  cli.nome=nome;cli.telefone=document.getElementById('e-tel').value.trim();
+  cli.nome=nome;
+  cli.telefone=document.getElementById('e-tel').value.trim();
+  cli.endereco=document.getElementById('e-endereco').value.trim();
+  cli.bairro=document.getElementById('e-bairro').value.trim();
   cli.cidade=document.getElementById('e-cidade').value.trim();
   cli.uf=document.getElementById('e-uf').value;
   cli.vendedor=document.getElementById('e-vend').value;
   cli.obs=document.getElementById('e-obs').value.trim();
-  api({action:'editCliente',cliente:{id:cli.id,nome:cli.nome,tel:cli.telefone,telefone:cli.telefone,cidade:cli.cidade,uf:cli.uf,vendedor:cli.vendedor,obs:cli.obs}})
+  api({action:'editCliente',cliente:{id:cli.id,nome:cli.nome,tel:cli.telefone,telefone:cli.telefone,endereco:cli.endereco,bairro:cli.bairro,cidade:cli.cidade,uf:cli.uf,vendedor:cli.vendedor,obs:cli.obs}})
     .then(()=>toast('Cliente atualizado!','ok')).catch(()=>toast('Salvo localmente.','err'));
   closeModal('modal-edit');
   poblarSelects();renderMsItems();renderClientes();renderDash();renderRanking();
@@ -931,12 +978,19 @@ function confirmarExclusao(){
   document.getElementById('del-nome').textContent=cli.nome;
   document.getElementById('modal-del').style.display='flex';
 }
-function executarExclusao(){
+async function executarExclusao(){
+  // Remove localmente primeiro
   db.clientes=db.clientes.filter(c=>String(c.id)!==String(editCliId));
   db.ligacoes=db.ligacoes.filter(l=>String(l.cid)!==String(editCliId));
-  api({action:'deleteCliente',id:editCliId}).then(()=>toast('Removido!','ok')).catch(()=>toast('Erro','err'));
   closeModal('modal-del');closeModal('modal-edit');
   poblarSelects();renderMsItems();renderClientes();renderDash();renderRanking();
+  // Envia para o Sheets — AGUARDA antes de qualquer sync
+  try{
+    await api({action:'deleteCliente',id:editCliId});
+    toast('Cliente removido do Sheets!','ok');
+  }catch(e){
+    toast('Removido localmente. Erro ao sincronizar.','err');
+  }
 }
 
 // ── LIGAÇÕES ──────────────────────────────────────────────────────────────────
@@ -1029,7 +1083,7 @@ function abrirDetalhe(cid){
       ${inativo?'<span class="badge" style="background:var(--amber-dim);color:var(--amber)">Inativo</span>':badgeStatus(s)}
       <span style="font-size:10px;background:rgba(255,255,255,.05);border-radius:4px;padding:2px 8px;color:var(--steel2);font-family:'JetBrains Mono',monospace">${cli.vendedor||'—'}</span>
     </div>
-    <p style="font-size:11px;color:var(--text3);font-family:'JetBrains Mono',monospace">${cli.telefone||''} ${[cli.cidade,cli.uf].filter(Boolean).join(' / ')}</p>`;
+    <p style="font-size:11px;color:var(--text3);font-family:'JetBrains Mono',monospace">${cli.telefone||''} ${[cli.endereco,cli.bairro,cli.cidade,cli.uf].filter(Boolean).join(' · ')}</p>`;
 
   // Obs do cadastro
   const obsBox=document.getElementById('dc-obs-cadastro');
