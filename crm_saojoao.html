@@ -732,8 +732,8 @@ async function syncAll(){
       api({action:'getLigacoes'}),
       api({action:'getMeta'})
     ]);
-    db.clientes=clis.map(c=>({...c,id:String(c.id)}));
-    db.ligacoes=ligs.map(l=>({...l,cid:String(l.clienteId),atendeu:l.atendeu==='TRUE'||l.atendeu===true,data:normalizarData(l.data)}));
+    db.clientes=clis.map(c=>({...c,id:normalizeId(c.id)}));
+    db.ligacoes=ligs.map(l=>({...l,cid:normalizeId(l.clienteId||l.cid),atendeu:l.atendeu==='TRUE'||l.atendeu===true,data:normalizarData(l.data)}));
     db.meta=metaR.meta||50;
     document.getElementById('meta-input').value=db.meta;
     // Agendamentos do localStorage
@@ -754,6 +754,28 @@ function setSyncStatus(msg,live){
 }
 
 const hoje=()=>new Date().toLocaleDateString('pt-BR');
+
+// ── NORMALIZAÇÃO DE ID ────────────────────────────────────────────────────────
+// O Google Sheets pode retornar timestamps longos em notação científica (ex: 1.75e12).
+// Esta função garante que o ID sempre seja uma string inteira limpa.
+function normalizeId(raw){
+  if(raw===null||raw===undefined||raw==='')return'';
+  // Se vier como número (Sheets converte grandes inteiros p/ float)
+  if(typeof raw==='number'){
+    // toFixed(0) converte 1.755496638251e12 → "1755496638251"
+    return String(Math.round(raw));
+  }
+  const s=String(raw).trim();
+  // Notação científica como string: "1.755e12"
+  if(/^[\d.]+e[+\-]?\d+$/i.test(s)){
+    return String(Math.round(Number(s)));
+  }
+  // Remove casas decimais que o Sheets às vezes adiciona: "1755496638251.0"
+  if(/^\d+\.0+$/.test(s)){
+    return s.replace(/\.0+$/,'');
+  }
+  return s;
+}
 
 function normalizarData(raw){
   if(!raw&&raw!==0)return'';
@@ -780,14 +802,15 @@ function clientesVisiveis(){
 }
 
 function statusUltimo(cid){
-  const ls=db.ligacoes.filter(l=>String(l.cid)===String(cid)&&l.atendeu&&l.resultado);
+  const id=normalizeId(cid);
+  const ls=db.ligacoes.filter(l=>normalizeId(l.cid)===id&&l.atendeu&&l.resultado);
   return ls.length?ls[ls.length-1].resultado:'sem_contato';
 }
-function ultimaLig(cid){const ls=db.ligacoes.filter(l=>String(l.cid)===String(cid));return ls.length?ls[ls.length-1]:null;}
-function totalLigs(cid){return db.ligacoes.filter(l=>String(l.cid)===String(cid)).length;}
+function ultimaLig(cid){const id=normalizeId(cid);const ls=db.ligacoes.filter(l=>normalizeId(l.cid)===id);return ls.length?ls[ls.length-1]:null;}
+function totalLigs(cid){const id=normalizeId(cid);return db.ligacoes.filter(l=>normalizeId(l.cid)===id).length;}
 
 function diasDesdeUltimaLig(cid){
-  const ul=ultimaLig(cid);
+  const ul=ultimaLig(normalizeId(cid));
   if(!ul||!ul.data)return null;
   const p=ul.data.split('/');
   if(p.length!==3)return null;
@@ -901,40 +924,19 @@ function renderClientes(){
     const inativo=isInativo(c.id);
     const diasStr=dias===null?'sem contato':dias===0?'hoje':`há ${dias}d`;
     const endStr=[c.bairro,c.cidade,c.uf].filter(Boolean).join('/');
-    const idEsc=String(c.id).replace(/"/g,'&quot;');
-    return`<div class="cli-row" data-cid="${idEsc}">
+    return`<div class="cli-row" onclick="abrirDetalhe('${c.id}')">
       <div class="avatar ${inativo?'av-cinza':avCor(s)}">${iniciais(c.nome)}</div>
       <div style="flex:1;min-width:0">
         <div class="cli-name">${c.nome}&nbsp;&nbsp;${inativo?'<span class="badge" style="background:var(--amber-dim);color:var(--amber)">Inativo</span>':badgeStatus(s)}</div>
         <div class="cli-sub">${endStr||'—'} · ${c.vendedor||'—'} · ${tl} lig · ${ul?ul.data+' ('+diasStr+')':'sem contato'}</div>
       </div>
-      <div class="cli-row-actions" style="display:flex;gap:5px;align-items:center">
-        <button class="btn btn-sm" data-action="editar" data-cid="${idEsc}">✎</button>
-        <button class="btn btn-purple btn-sm" data-action="agendar" data-cid="${idEsc}">📅</button>
-        <button class="btn btn-primary btn-sm" data-action="lig" data-cid="${idEsc}">+ Lig.</button>
+      <div style="display:flex;gap:5px;align-items:center" onclick="event.stopPropagation()">
+        <button class="btn btn-sm" onclick="abrirEdicao('${c.id}')">✎</button>
+        <button class="btn btn-purple btn-sm" onclick="abrirAgendamento('${c.id}')">📅</button>
+        <button class="btn btn-primary btn-sm" onclick="abrirLig('${c.id}')">+ Lig.</button>
       </div>
     </div>`;
   }).join('');
-
-  // Delegação de eventos — garante que o ID correto sempre vem do data-cid do elemento
-  el.querySelectorAll('.cli-row').forEach(row=>{
-    row.addEventListener('click',function(e){
-      // Se clicou em botão de ação, não abre detalhe
-      const btn=e.target.closest('[data-action]');
-      if(btn){
-        e.stopPropagation();
-        const cid=btn.getAttribute('data-cid');
-        const action=btn.getAttribute('data-action');
-        if(action==='editar')abrirEdicao(cid);
-        else if(action==='agendar')abrirAgendamento(cid);
-        else if(action==='lig')abrirLig(cid);
-        return;
-      }
-      // Clique na linha → abre detalhe usando data-cid da própria linha
-      const cid=this.getAttribute('data-cid');
-      if(cid)abrirDetalhe(cid);
-    });
-  });
 }
 
 // ── CADASTRAR ─────────────────────────────────────────────────────────────────
@@ -964,8 +966,8 @@ function cadastrarCli(){
 
 // ── EDIÇÃO ────────────────────────────────────────────────────────────────────
 function abrirEdicao(cid){
-  editCliId=cid;closeModal('modal-cli');
-  const cli=db.clientes.find(c=>String(c.id)===String(cid));if(!cli)return;
+  editCliId=normalizeId(cid);closeModal('modal-cli');
+  const cli=db.clientes.find(c=>normalizeId(c.id)===editCliId);if(!cli)return;
   document.getElementById('edit-sub').textContent='ID: '+cli.id;
   document.getElementById('e-nome').value=cli.nome||'';
   document.getElementById('e-tel').value=cli.telefone||'';
@@ -978,7 +980,7 @@ function abrirEdicao(cid){
   document.getElementById('modal-edit').style.display='flex';
 }
 function salvarEdicao(){
-  const cli=db.clientes.find(c=>String(c.id)===String(editCliId));if(!cli)return;
+  const cli=db.clientes.find(c=>normalizeId(c.id)===normalizeId(editCliId));if(!cli)return;
   const nome=document.getElementById('e-nome').value.trim();
   if(!nome){toast('Nome obrigatório.','err');return;}
   cli.nome=nome;
@@ -995,14 +997,14 @@ function salvarEdicao(){
   poblarSelects();renderMsItems();renderClientes();renderDash();renderRanking();
 }
 function confirmarExclusao(){
-  const cli=db.clientes.find(c=>String(c.id)===String(editCliId));if(!cli)return;
+  const cli=db.clientes.find(c=>normalizeId(c.id)===normalizeId(editCliId));if(!cli)return;
   document.getElementById('del-nome').textContent=cli.nome;
   document.getElementById('modal-del').style.display='flex';
 }
 async function executarExclusao(){
-  // Remove localmente primeiro
-  db.clientes=db.clientes.filter(c=>String(c.id)!==String(editCliId));
-  db.ligacoes=db.ligacoes.filter(l=>String(l.cid)!==String(editCliId));
+  const idN=normalizeId(editCliId);
+  db.clientes=db.clientes.filter(c=>normalizeId(c.id)!==idN);
+  db.ligacoes=db.ligacoes.filter(l=>normalizeId(l.cid)!==idN);
   closeModal('modal-del');closeModal('modal-edit');
   poblarSelects();renderMsItems();renderClientes();renderDash();renderRanking();
   // Envia para o Sheets — AGUARDA antes de qualquer sync
@@ -1020,8 +1022,8 @@ function setCanal(c){
   ['ligacao','whatsapp','visita'].forEach(id=>document.getElementById('canal-'+id).classList.toggle('sel',id===c));
 }
 function abrirLig(cid){
-  modalCliId=cid;atendeuSel=null;resultadoSel=null;canalSel=null;
-  const cli=db.clientes.find(c=>String(c.id)===String(cid));
+  modalCliId=normalizeId(cid);atendeuSel=null;resultadoSel=null;canalSel=null;
+  const cli=db.clientes.find(c=>normalizeId(c.id)===modalCliId);
   document.getElementById('ml-titulo').textContent='Registrar Contato';
   document.getElementById('ml-sub').textContent=cli?cli.nome:'';
   ['ligacao','whatsapp','visita'].forEach(id=>document.getElementById('canal-'+id).classList.remove('sel'));
@@ -1066,8 +1068,8 @@ function confirmarLig(){
   if(!vendedorSel){toast('Selecione o vendedor.','err');return;}
   if(atendeuSel===null){toast('Informe se atendeu.','err');return;}
   if(atendeuSel&&!resultadoSel){toast('Informe o resultado.','err');return;}
-  const cli=db.clientes.find(c=>String(c.id)===String(modalCliId))||{};
-  const lig={id:String(Date.now()),cid:String(modalCliId),clienteId:String(modalCliId),canal:canalSel,vendedor:vendedorSel,atendeu:atendeuSel,resultado:resultadoSel,motivo:resultadoSel==='perdido'?document.getElementById('ml-motivo').value:'',obs:document.getElementById('ml-obs').value.trim(),data:hoje(),hora:new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}),cidade:cli.cidade||'',uf:cli.uf||''};
+  const cli=db.clientes.find(c=>normalizeId(c.id)===normalizeId(modalCliId))||{};
+  const lig={id:String(Date.now()),cid:normalizeId(modalCliId),clienteId:normalizeId(modalCliId),canal:canalSel,vendedor:vendedorSel,atendeu:atendeuSel,resultado:resultadoSel,motivo:resultadoSel==='perdido'?document.getElementById('ml-motivo').value:'',obs:document.getElementById('ml-obs').value.trim(),data:hoje(),hora:new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}),cidade:cli.cidade||'',uf:cli.uf||''};
   db.ligacoes.push(lig);
   api({action:'addLigacao',ligacao:lig}).then(()=>toast('Contato salvo!','ok')).catch(()=>toast('Erro ao salvar','err'));
   closeModal('modal-lig');renderClientes();renderDash();renderRanking();
@@ -1075,7 +1077,7 @@ function confirmarLig(){
 
 // ── ALTERAR STATUS DE LIGAÇÃO ─────────────────────────────────────────────────
 function alterarStatusLig(ligId,novoStatus){
-  const lig=db.ligacoes.find(l=>String(l.id)===String(ligId));
+  const lig=db.ligacoes.find(l=>normalizeId(l.id)===normalizeId(ligId));
   if(!lig)return;
   lig.resultado=novoStatus;
   lig.atendeu=true;
@@ -1094,8 +1096,9 @@ function fmtDataHist(data,hora){
 }
 
 function abrirDetalhe(cid){
-  modalCliId=cid;
-  const cli=db.clientes.find(c=>String(c.id)===String(cid));
+  const cidN=normalizeId(cid);
+  modalCliId=cidN;
+  const cli=db.clientes.find(c=>normalizeId(c.id)===cidN);
   const s=statusUltimo(cid);
   const inativo=isInativo(cid);
   document.getElementById('dc-nome').textContent=cli.nome;
@@ -1111,7 +1114,7 @@ function abrirDetalhe(cid){
   if(cli.obs){obsBox.style.display='block';obsBox.textContent='📌 '+cli.obs;}
   else{obsBox.style.display='none';}
 
-  const ligs=db.ligacoes.filter(l=>String(l.cid)===String(cid)).slice().reverse();
+  const ligs=db.ligacoes.filter(l=>normalizeId(l.cid)===cidN).slice().reverse();
   const statusOpts=['interessado','negociacao','fechado','perdido','nao_atendeu'];
   const statusLabel={interessado:'Interessado',negociacao:'Em negociação',fechado:'Fechado',perdido:'Perdido',nao_atendeu:'Não atendeu'};
   document.getElementById('dc-hist').innerHTML=ligs.length?ligs.map(l=>{
@@ -1140,9 +1143,9 @@ function abrirDetalhe(cid){
 
 // ── AGENDAMENTOS ──────────────────────────────────────────────────────────────
 function abrirAgendamento(cid){
-  agCliId=cid;
+  agCliId=cid?normalizeId(cid):null;
   closeModal('modal-cli');
-  const cli=cid?db.clientes.find(c=>String(c.id)===String(cid)):null;
+  const cli=cid?db.clientes.find(c=>normalizeId(c.id)===normalizeId(cid)):null;
   document.getElementById('ag-cliente-nome').textContent=cli?cli.nome:'Sem cliente específico';
   document.getElementById('ag-vend').value=usuarioAtual&&!isGerente()?usuarioAtual:(cli?cli.vendedor||'':'');
   // data padrão = hoje
@@ -1159,7 +1162,7 @@ function salvarAgendamento(){
   const hora=document.getElementById('ag-hora').value;
   const motivo=document.getElementById('ag-motivo').value.trim();
   if(!vend||!data||!hora){toast('Preencha vendedor, data e hora.','err');return;}
-  const ag={id:String(Date.now()),cid:agCliId?String(agCliId):null,vendedor:vend,data,hora,motivo,concluido:false};
+  const ag={id:String(Date.now()),cid:agCliId?normalizeId(agCliId):null,vendedor:vend,data,hora,motivo,concluido:false};
   db.agendamentos.push(ag);
   salvarAgendamentosLocal();
   toast('Agendamento criado!','ok');
@@ -1199,7 +1202,7 @@ function renderAgenda(){
 
   const agoraStr=new Date().toISOString().slice(0,16);
   el.innerHTML=lista.map(ag=>{
-    const cli=ag.cid?db.clientes.find(c=>String(c.id)===String(ag.cid)):null;
+    const cli=ag.cid?db.clientes.find(c=>normalizeId(c.id)===normalizeId(ag.cid)):null;
     const agDT=ag.data+'T'+ag.hora;
     const vencido=!ag.concluido&&agDT<=agoraStr;
     const dataFmt=ag.data?(()=>{const p=ag.data.split('-');return p.length===3?p[2]+'/'+p[1]+'/'+p[0]:ag.data;})():'—';
@@ -1237,7 +1240,7 @@ function verificarNotificacoes(){
     badge.style.display='flex';badge.textContent=pendentes.length;
     if(pendentes.length>0&&'Notification' in window&&Notification.permission==='granted'){
       pendentes.slice(0,1).forEach(a=>{
-        const cli=a.cid?db.clientes.find(c=>String(c.id)===String(a.cid)):null;
+        const cli=a.cid?db.clientes.find(c=>normalizeId(c.id)===normalizeId(a.cid)):null;
         new Notification('🔔 Lembrete CRM',{body:(cli?cli.nome:'')+(a.motivo?' — '+a.motivo:''),icon:''});
       });
     }
@@ -1308,9 +1311,9 @@ function renderDash(){
     const cOk=!cidade||(c.cidade||'').trim()===cidade;
     return vOk&&cOk;
   });
-  const ids=new Set(clis.map(c=>String(c.id)));
+  const ids=new Set(clis.map(c=>normalizeId(c.id)));
   let ligs=db.ligacoes.filter(l=>{
-    if(!ids.has(String(l.cid)))return false;
+    if(!ids.has(normalizeId(l.cid)))return false;
     if(dataFiltro&&normalizarData(l.data)!==dataFiltro)return false;
     return true;
   });
@@ -1339,7 +1342,7 @@ function renderDash(){
 
   const sc={interessado:0,negociacao:0,fechado:0,perdido:0,sem_contato:0};
   clis.forEach(c=>{
-    const ligsC=ligs.filter(l=>String(l.cid)===String(c.id)&&l.atendeu&&l.resultado);
+    const ligsC=ligs.filter(l=>normalizeId(l.cid)===normalizeId(c.id)&&l.atendeu&&l.resultado);
     sc[ligsC.length?ligsC[ligsC.length-1].resultado:'sem_contato']=(sc[ligsC.length?ligsC[ligsC.length-1].resultado:'sem_contato']||0)+1;
   });
   const scL={interessado:'Interessado',negociacao:'Em negociação',fechado:'Fechado',perdido:'Perdido',sem_contato:'Sem contato'};
@@ -1406,7 +1409,7 @@ function baixarModelo(){
 function exportarLigacoes(){
   const h='cliente,vendedor,canal,cidade,uf,data,hora,atendeu,resultado,motivo,observacao';
   const rows=db.ligacoes.map(l=>{
-    const cli=db.clientes.find(c=>String(c.id)===String(l.cid))||{};
+    const cli=db.clientes.find(c=>normalizeId(c.id)===normalizeId(l.cid))||{};
     return[cli.nome||'',l.vendedor||'',l.canal||'',cli.cidade||'',cli.uf||'',l.data,l.hora,l.atendeu?'Sim':'Não',l.resultado||'',l.motivo||'',l.obs||''].map(v=>`"${v}"`).join(',');
   });
   const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([[h,...rows].join('\n')],{type:'text/csv;charset=utf-8'}));a.download='contatos.csv';a.click();
