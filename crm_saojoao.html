@@ -1135,7 +1135,6 @@ function fmtDataHist(data,hora){
 }
 
 function abrirDetalhe(ref){
-  // ref pode ser _idx (número) ou id (string) — índice é mais confiável
   let cli;
   if(typeof ref==='number'){
     cli=db.clientes[ref];
@@ -1146,8 +1145,8 @@ function abrirDetalhe(ref){
   if(!cli){toast('Cliente não encontrado.','err');return;}
   const cidN=normalizeId(cli.id);
   modalCliId=cli._idx!==undefined?cli._idx:cidN;
-  const s=statusUltimo(cid);
-  const inativo=isInativo(cid);
+  const s=statusUltimo(cidN);
+  const inativo=isInativo(cidN);
   document.getElementById('dc-nome').textContent=cli.nome;
   document.getElementById('dc-info').innerHTML=`
     <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px">
