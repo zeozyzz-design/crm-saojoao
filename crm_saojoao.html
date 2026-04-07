@@ -1245,7 +1245,7 @@ function abrirDetalhe(ref){
           <div style="display:flex;align-items:center;gap:6px;margin-top:4px">
             <span style="font-size:10px;color:var(--text3)">Alterar:</span>
             <select class="hist-status-sel"
-              onchange="alterarStatusLig('${ligId}', this.value, ${typeof cli._idx==='number'?cli._idx:'\\''+cidReal+'\\''})"
+              onchange="alterarStatusLig('${ligId}', this.value, ${typeof cli._idx==='number'?cli._idx:"'"+cidReal+"'"})"
               title="Alterar status desta ligação">${selOptsCorrect}</select>
           </div>
           ${obsHtml}
