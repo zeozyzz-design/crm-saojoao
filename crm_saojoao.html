@@ -1113,15 +1113,21 @@ function confirmarLig(){
 }
 
 // ── ALTERAR STATUS DE LIGAÇÃO ─────────────────────────────────────────────────
-function alterarStatusLig(ligId,novoStatus){
-  const lig=db.ligacoes.find(l=>normalizeId(l.id)===normalizeId(ligId));
-  if(!lig)return;
-  lig.resultado=novoStatus;
-  lig.atendeu=novoStatus!=='nao_atendeu';
-  if(novoStatus==='nao_atendeu'){lig.atendeu=false;lig.resultado='nao_atendeu';}
-  api({action:'updateLigacao',ligacao:lig}).then(()=>toast('Status atualizado!','ok')).catch(()=>toast('Salvo localmente.','err'));
-  // Reabre o detalhe pelo mesmo modalCliId (que agora é _idx)
-  abrirDetalhe(modalCliId);renderClientes();renderDash();
+function alterarStatusLig(ligId, novoStatus, cliRef){
+  const lig=db.ligacoes.find(l=>normalizeId(String(l.id||''))===normalizeId(String(ligId)));
+  if(!lig){toast('Ligação não encontrada.','err');return;}
+  if(novoStatus==='nao_atendeu'){
+    lig.atendeu=false; lig.resultado='nao_atendeu';
+  } else {
+    lig.atendeu=true; lig.resultado=novoStatus;
+  }
+  api({action:'updateLigacao',ligacao:lig})
+    .then(()=>toast('Status atualizado!','ok'))
+    .catch(()=>toast('Salvo localmente.','err'));
+  // Reabre o detalhe com a referência correta
+  const ref = cliRef!==undefined ? cliRef : modalCliId;
+  abrirDetalhe(ref);
+  renderClientes(); renderDash();
 }
 
 // ── DETALHE CLIENTE ───────────────────────────────────────────────────────────
@@ -1135,56 +1141,133 @@ function fmtDataHist(data,hora){
 }
 
 function abrirDetalhe(ref){
+  // Busca o cliente pelo índice (_idx) quando disponível — nunca falha com IDs duplicados
   let cli;
-  if(typeof ref==='number'){
+  if(typeof ref==='number' && ref>=0 && ref<db.clientes.length){
     cli=db.clientes[ref];
   } else {
-    const cidN=normalizeId(ref);
+    const cidN=normalizeId(String(ref));
     cli=db.clientes.find(c=>normalizeId(c.id)===cidN);
   }
-  if(!cli){toast('Cliente não encontrado.','err');return;}
-  const cidN=normalizeId(cli.id);
-  modalCliId=cli._idx!==undefined?cli._idx:cidN;
-  const s=statusUltimo(cidN);
-  const inativo=isInativo(cidN);
-  document.getElementById('dc-nome').textContent=cli.nome;
-  document.getElementById('dc-info').innerHTML=`
+  if(!cli){
+    // fallback: tenta buscar pelo nome (caso extremo)
+    console.warn('[abrirDetalhe] cliente não encontrado para ref=',ref);
+    toast('Cliente não encontrado.','err');
+    return;
+  }
+
+  // Salva o _idx como referência global — todas as ações do modal usam isso
+  modalCliId = typeof cli._idx==='number' ? cli._idx : normalizeId(cli.id);
+
+  // ID real para filtrar ligações
+  const cidReal = normalizeId(cli.id);
+
+  const s       = statusUltimo(cidReal);
+  const inativo = isInativo(cidReal);
+
+  // ── Cabeçalho do modal ──────────────────────────────────────────
+  document.getElementById('dc-nome').textContent = cli.nome || '—';
+  document.getElementById('dc-info').innerHTML = `
     <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px">
-      ${inativo?'<span class="badge" style="background:var(--amber-dim);color:var(--amber)">Inativo</span>':badgeStatus(s)}
+      ${inativo
+        ? '<span class="badge" style="background:var(--amber-dim);color:var(--amber)">Inativo</span>'
+        : badgeStatus(s)}
       <span style="font-size:10px;background:rgba(255,255,255,.05);border-radius:4px;padding:2px 8px;color:var(--steel2);font-family:'JetBrains Mono',monospace">${cli.vendedor||'—'}</span>
     </div>
-    <p style="font-size:11px;color:var(--text3);font-family:'JetBrains Mono',monospace">${cli.telefone||''} ${[cli.endereco,cli.bairro,cli.cidade,cli.uf].filter(Boolean).join(' · ')}</p>`;
+    <p style="font-size:11px;color:var(--text3);font-family:'JetBrains Mono',monospace">
+      ${cli.telefone||''}${cli.telefone&&(cli.endereco||cli.bairro||cli.cidade)?' · ':''}${[cli.endereco,cli.bairro,cli.cidade,cli.uf].filter(Boolean).join(' · ')}
+    </p>`;
 
-  // Obs do cadastro
-  const obsBox=document.getElementById('dc-obs-cadastro');
-  if(cli.obs){obsBox.style.display='block';obsBox.textContent='📌 '+cli.obs;}
-  else{obsBox.style.display='none';}
+  // ── Observação do cadastro ──────────────────────────────────────
+  const obsBox = document.getElementById('dc-obs-cadastro');
+  if(cli.obs && cli.obs.trim()){
+    obsBox.style.display='block';
+    obsBox.textContent='📌 '+cli.obs;
+  } else {
+    obsBox.style.display='none';
+  }
 
-  const ligs=db.ligacoes.filter(l=>normalizeId(l.cid)===cidN).slice().reverse();
-  const statusOpts=['interessado','negociacao','fechado','perdido','nao_atendeu'];
-  const statusLabel={interessado:'Interessado',negociacao:'Em negociação',fechado:'Fechado',perdido:'Perdido',nao_atendeu:'Não atendeu'};
-  document.getElementById('dc-hist').innerHTML=ligs.length?ligs.map(l=>{
-    const ic=canalIcon[l.canal]||'📞';
-    const vend=l.vendedor||cli.vendedor||'—';
-    const statusBadge=l.atendeu?badgeStatus(l.resultado):'<span class="badge b-cinza">Não atendeu</span>';
-    const motivoStr=l.motivo?` · <span style="color:var(--text3)">${{preco:'Preço',prazo:'Prazo',outro:'Outro'}[l.motivo]||''}</span>`:'';
-    const obsStr=l.obs?`<div style="font-size:11px;color:var(--amber);margin-top:4px;padding:5px 8px;background:var(--amber-dim);border-radius:4px;border-left:2px solid var(--amber)">💬 ${l.obs}</div>`:'';
-    const selOpts=statusOpts.map(o=>`<option value="${o}" ${(l.resultado===o||(!l.atendeu&&o==='nao_atendeu'))?'selected':''}>${statusLabel[o]}</option>`).join('');
-    return`<div class="hist-item">
-      <div style="min-width:120px;flex-shrink:0">
-        <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text2)">${fmtDataHist(l.data,l.hora)}</div>
-        <div style="font-size:11px;color:var(--text3);margin-top:2px">${ic} ${vend}</div>
-      </div>
-      <div style="flex:1;min-width:0">
-        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-          ${statusBadge}${motivoStr}
-          <select class="hist-status-sel" onchange="alterarStatusLig('${l.id}',this.value)" title="Alterar status">${selOpts}</select>
+  // ── Histórico de ligações ───────────────────────────────────────
+  // Filtra por cidReal — garante exibir as ligações DESTE cliente
+  const ligs = db.ligacoes.filter(l => normalizeId(String(l.cid||l.clienteId||'')) === cidReal)
+                            .slice().reverse();
+
+  const statusOpts  = ['interessado','negociacao','fechado','perdido','nao_atendeu'];
+  const statusLabel = {
+    interessado:'Interessado', negociacao:'Em negociação',
+    fechado:'Fechado', perdido:'Perdido', nao_atendeu:'Não atendeu'
+  };
+  const motivoLabel = {preco:'Preço', prazo:'Prazo', outro:'Outro'};
+  const canalIcon2  = {ligacao:'📞', whatsapp:'💬', visita:'🤝'};
+
+  if(!ligs.length){
+    document.getElementById('dc-hist').innerHTML=
+      '<p class="empty" style="padding:1.5rem 0">Nenhum contato registrado ainda.</p>';
+  } else {
+    document.getElementById('dc-hist').innerHTML = ligs.map(l => {
+      const ic         = canalIcon2[l.canal]||'📞';
+      const vend       = l.vendedor||cli.vendedor||'—';
+      const resultado  = l.resultado||'nao_atendeu';
+      const atendeu    = l.atendeu===true||l.atendeu==='TRUE'||l.atendeu==='true';
+      const statusBadge= atendeu ? badgeStatus(resultado)
+                                 : '<span class="badge b-cinza">Não atendeu</span>';
+      const motivoStr  = l.motivo ? ` · <span style="color:var(--text3);font-size:11px">${motivoLabel[l.motivo]||l.motivo}</span>` : '';
+
+      // Observação da ligação — clicável para expandir
+      const ligId = String(l.id||'');
+      const obsHtml = l.obs && l.obs.trim()
+        ? `<div class="lig-obs" id="obs_${ligId}" style="display:none;font-size:11px;color:var(--amber);margin-top:6px;padding:6px 10px;background:var(--amber-dim);border-radius:4px;border-left:2px solid var(--amber);line-height:1.5">💬 ${l.obs}</div>
+           <button class="btn btn-sm" style="font-size:10px;padding:2px 8px;margin-top:4px;color:var(--text3)" onclick="toggleObs('${ligId}')">ver obs</button>`
+        : '';
+
+      // Select para alterar status
+      const selOpts = statusOpts.map(o =>
+        `<option value="${o}" ${(atendeu?resultado:resultado)===(o==='nao_atendeu'&&!atendeu?'nao_atendeu':o)?'selected':''
+          }>${statusLabel[o]}</option>`
+      ).join('');
+      // Versão correta do selected
+      const selOptsCorrect = statusOpts.map(o => {
+        const isSelected = atendeu
+          ? resultado === o
+          : o === 'nao_atendeu';
+        return `<option value="${o}" ${isSelected?'selected':''}>${statusLabel[o]}</option>`;
+      }).join('');
+
+      return `<div class="hist-item" style="cursor:default">
+        <div style="min-width:110px;flex-shrink:0">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text2);font-weight:500">${fmtDataHist(l.data,l.hora)}</div>
+          <div style="font-size:11px;color:var(--text3);margin-top:3px">${ic} ${vend}</div>
         </div>
-        ${obsStr}
-      </div>
-    </div>`;
-  }).join(''):'<p class="empty" style="padding:1rem">nenhum contato registrado</p>';
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:2px">
+            ${statusBadge}${motivoStr}
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;margin-top:4px">
+            <span style="font-size:10px;color:var(--text3)">Alterar:</span>
+            <select class="hist-status-sel"
+              onchange="alterarStatusLig('${ligId}', this.value, ${typeof cli._idx==='number'?cli._idx:'\\''+cidReal+'\\''})"
+              title="Alterar status desta ligação">${selOptsCorrect}</select>
+          </div>
+          ${obsHtml}
+        </div>
+      </div>`;
+    }).join('');
+  }
+
   document.getElementById('modal-cli').style.display='flex';
+}
+
+function toggleObs(ligId){
+  const el=document.getElementById('obs_'+ligId);
+  if(!el)return;
+  const btn=el.nextElementSibling;
+  if(el.style.display==='none'){
+    el.style.display='block';
+    if(btn)btn.textContent='ocultar obs';
+  } else {
+    el.style.display='none';
+    if(btn)btn.textContent='ver obs';
+  }
 }
 
 // ── AGENDAMENTOS ──────────────────────────────────────────────────────────────
@@ -1238,11 +1321,16 @@ function renderAgenda(){
   poblarSelects();
   const filtVend=document.getElementById('ag-fil-vend')?.value||'';
   const filtData=document.getElementById('ag-fil-data')?.value||'';
-  // agendamentos visíveis por login
+
   let lista=db.agendamentos.filter(a=>{
-    if(!isGerente()&&a.vendedor!==usuarioAtual)return false;
-    if(filtVend&&a.vendedor!==filtVend)return false;
-    if(filtData){const d=filtData.split('-');const dBR=d[2]+'/'+d[1]+'/'+d[0];if(a.data!==filtData&&normalizarData(a.data)!==dBR)return false;}
+    // Gerente vê todos; vendedor vê os seus (criados por qualquer um)
+    if(!isGerente() && a.vendedor!==usuarioAtual) return false;
+    if(filtVend && a.vendedor!==filtVend) return false;
+    if(filtData){
+      const d=filtData.split('-');
+      const dBR=d[2]+'/'+d[1]+'/'+d[0];
+      if(a.data!==filtData && normalizarData(a.data)!==dBR) return false;
+    }
     return true;
   }).sort((a,b)=>(a.data+a.hora).localeCompare(b.data+b.hora));
 
@@ -1281,6 +1369,7 @@ function verificarNotificacoes(){
   const agoraStr=new Date().toISOString().slice(0,16);
   const pendentes=db.agendamentos.filter(a=>{
     if(a.concluido)return false;
+    // Vendedor recebe notificação de agendamentos destinados a ele
     if(!isGerente()&&a.vendedor!==usuarioAtual)return false;
     return(a.data+'T'+a.hora)<=agoraStr;
   });
