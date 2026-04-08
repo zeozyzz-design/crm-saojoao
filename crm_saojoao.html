@@ -251,7 +251,7 @@ label:first-child{margin-top:0}
         <option value="">Selecione seu nome</option>
         <option>Ana</option><option>Cris</option><option>Eder</option><option>Mara</option>
         <option>Marilia</option><option>Pamela</option><option>Rafaela</option>
-        <option>Matheus</option><option>Gerencial</option>
+        <option>Marcelo</option><option>Matheus</option><option>Gerencial</option>
       </select>
       <label>Senha</label>
       <input type="password" id="login-pwd" maxlength="4" placeholder="••••" oninput="this.value=this.value.replace(/\D/g,'').slice(0,4)">
@@ -351,7 +351,7 @@ label:first-child{margin-top:0}
       </div>
     </div>
     <label>Vendedor responsável</label>
-    <select id="e-vend"><option value="">Selecione</option><option>Ana</option><option>Cris</option><option>Eder</option><option>Mara</option><option>Marilia</option><option>Pamela</option><option>Rafaela</option><option>Matheus</option></select>
+    <select id="e-vend"><option value="">Selecione</option><option>Ana</option><option>Cris</option><option>Eder</option><option>Mara</option><option>Marilia</option><option>Pamela</option><option>Rafaela</option><option>Marcelo</option></select>
     <label>Observação do cadastro</label>
     <textarea id="e-obs" placeholder="Informações importantes sobre este cliente..."></textarea>
     <div style="display:flex;justify-content:space-between;align-items:center;margin-top:20px;flex-wrap:wrap;gap:8px">
@@ -620,7 +620,7 @@ label:first-child{margin-top:0}
             </div>
           </div>
           <label>Vendedor responsável</label>
-          <select id="c-vend"><option value="">Selecione</option><option>Ana</option><option>Cris</option><option>Eder</option><option>Mara</option><option>Marilia</option><option>Pamela</option><option>Rafaela</option><option>Matheus</option></select>
+          <select id="c-vend"><option value="">Selecione</option><option>Ana</option><option>Cris</option><option>Eder</option><option>Mara</option><option>Marilia</option><option>Pamela</option><option>Rafaela</option><option>Marcelo</option></select>
           <label>Observação do cadastro (opcional)</label>
           <textarea id="c-obs" placeholder="Informações importantes sobre este cliente..."></textarea>
           <div style="display:flex;justify-content:flex-end;margin-top:16px">
@@ -651,8 +651,8 @@ function gerarId(prefix=''){
 }
 
 // ── AUTENTICAÇÃO ─────────────────────────────────────────────────────────────
-const VENDEDORES=['Ana','Cris','Eder','Mara','Marilia','Pamela','Rafaela','Marcelo','Gerencial'];
-const GERENTES=['Marcelo','Gerencial'];
+const VENDEDORES=['Ana','Cris','Eder','Mara','Marilia','Pamela','Rafaela','Marcelo','Matheus','Gerencial'];
+const GERENTES=['Marcelo','Matheus','Gerencial'];
 let usuarioAtual=null;
 
 function getSenhas(){
@@ -737,17 +737,26 @@ async function syncAll(){
   btn.classList.add('syncing');icon.classList.add('spin');
   setSyncStatus('sincronizando...',false);
   try{
-    const[clis,ligs,metaR]=await Promise.all([
+    const[clis,ligs,metaR,agsR]=await Promise.all([
       api({action:'getClientes'}),
       api({action:'getLigacoes'}),
-      api({action:'getMeta'})
+      api({action:'getMeta'}),
+      api({action:'getAgendamentos'})
     ]);
     db.clientes=clis.map((c,i)=>({...c,id:normalizeId(c.id),_idx:i}));
     db.ligacoes=ligs.map(l=>({...l,cid:normalizeId(l.clienteId||l.cid),atendeu:l.atendeu==='TRUE'||l.atendeu===true,data:normalizarData(l.data)}));
     db.meta=metaR.meta||50;
     document.getElementById('meta-input').value=db.meta;
-    // Agendamentos do localStorage
-    db.agendamentos=JSON.parse(localStorage.getItem('crm_agendamentos')||'[]');
+    // Agendamentos vêm do Sheets — merge com localStorage como fallback
+    const agLocal=JSON.parse(localStorage.getItem('crm_agendamentos')||'[]');
+    const agSheets=(agsR||[]).map(a=>({
+      ...a,
+      concluido:a.concluido==='TRUE'||a.concluido===true
+    }));
+    // Merge: Sheets é fonte de verdade; itens só-local são incluídos se não existirem no Sheets
+    const idsSheets=new Set(agSheets.map(a=>String(a.id)));
+    const soLocal=agLocal.filter(a=>!idsSheets.has(String(a.id)));
+    db.agendamentos=[...agSheets,...soLocal];
     poblarSelects();renderMsItems();renderClientes();renderDash();renderRanking();renderAgenda();
     setSyncStatus('atualizado '+new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}),true);
     toast('Dados sincronizados!','ok');
@@ -1245,7 +1254,7 @@ function abrirDetalhe(ref){
           <div style="display:flex;align-items:center;gap:6px;margin-top:4px">
             <span style="font-size:10px;color:var(--text3)">Alterar:</span>
             <select class="hist-status-sel"
-              onchange="alterarStatusLig('${ligId}', this.value, ${typeof cli._idx==='number'?cli._idx:"'"+cidReal+"'"})"
+              onchange="alterarStatusLig('${ligId}', this.value, ${typeof cli._idx==='number'?cli._idx:'\\''+cidReal+'\\''})"
               title="Alterar status desta ligação">${selOptsCorrect}</select>
           </div>
           ${obsHtml}
@@ -1271,16 +1280,37 @@ function toggleObs(ligId){
 }
 
 // ── AGENDAMENTOS ──────────────────────────────────────────────────────────────
+// Regras de visibilidade:
+// - Gerente (Marcelo, Matheus, Gerencial): vê e cria para qualquer vendedor
+// - Vendedor: vê apenas agendamentos onde a.vendedor === usuarioAtual (próprios + atribuídos)
+
+function podeCriarParaOutros(){
+  return isGerente();
+}
+
 function abrirAgendamento(ref){
   let cli=null;
   if(ref!==null&&ref!==undefined){
-    cli=typeof ref==='number'?db.clientes[ref]:db.clientes.find(c=>normalizeId(c.id)===normalizeId(ref));
+    cli=typeof ref==='number'
+      ?db.clientes[ref]
+      :db.clientes.find(c=>normalizeId(c.id)===normalizeId(String(ref)));
   }
   agCliId=cli?(cli._idx!==undefined?cli._idx:normalizeId(cli.id)):null;
   closeModal('modal-cli');
-  document.getElementById('ag-cliente-nome').textContent=cli?cli.nome:'Sem cliente específico';
-  document.getElementById('ag-vend').value=usuarioAtual&&!isGerente()?usuarioAtual:(cli?cli.vendedor||'':'');
-  // data padrão = hoje
+
+  document.getElementById('ag-cliente-nome').textContent=cli?'📋 '+cli.nome:'Sem cliente específico';
+
+  // Select de vendedor: gerente escolhe qualquer um; vendedor está fixo em si mesmo
+  const selVend=document.getElementById('ag-vend');
+  if(podeCriarParaOutros()){
+    selVend.disabled=false;
+    // Pré-seleciona o vendedor do cliente se disponível
+    selVend.value=cli?cli.vendedor||'':'';
+  } else {
+    selVend.value=usuarioAtual;
+    selVend.disabled=true;
+  }
+
   const agora=new Date();
   document.getElementById('ag-data').value=agora.toISOString().split('T')[0];
   document.getElementById('ag-hora').value=agora.toTimeString().slice(0,5);
@@ -1288,33 +1318,63 @@ function abrirAgendamento(ref){
   document.getElementById('modal-agenda').style.display='flex';
 }
 
-function salvarAgendamento(){
-  const vend=document.getElementById('ag-vend').value;
-  const data=document.getElementById('ag-data').value;
-  const hora=document.getElementById('ag-hora').value;
+async function salvarAgendamento(){
+  const vend  =document.getElementById('ag-vend').value;
+  const data  =document.getElementById('ag-data').value;
+  const hora  =document.getElementById('ag-hora').value;
   const motivo=document.getElementById('ag-motivo').value.trim();
   if(!vend||!data||!hora){toast('Preencha vendedor, data e hora.','err');return;}
-  const ag={id:`ag_${Date.now()}_${Math.random().toString(36).slice(2,7)}`,cid:agCliId,vendedor:vend,data,hora,motivo,concluido:false};
+
+  // Busca o nome do cliente para guardar (facilita exibição sem depender de _idx)
+  let cliNome='';
+  let cliIdReal=null;
+  if(agCliId!==null&&agCliId!==undefined){
+    const cli=typeof agCliId==='number'?db.clientes[agCliId]:db.clientes.find(c=>normalizeId(c.id)===normalizeId(String(agCliId)));
+    if(cli){cliNome=cli.nome;cliIdReal=normalizeId(cli.id);}
+  }
+
+  const ag={
+    id        : gerarId('ag_'),
+    cid       : cliIdReal,          // ID real do cliente (string estável)
+    cliNome   : cliNome,            // Cache do nome para exibição
+    vendedor  : vend,               // Destinatário
+    criadoPor : usuarioAtual,       // Quem criou
+    data, hora, motivo,
+    concluido : false
+  };
+
   db.agendamentos.push(ag);
   salvarAgendamentosLocal();
-  toast('Agendamento criado!','ok');
+
+  // Salvar no Sheets em background
+  api({action:'addAgendamento',agendamento:ag})
+    .then(()=>toast('Agendamento salvo!','ok'))
+    .catch(()=>toast('Salvo localmente. Sem conexão.','err'));
+
   closeModal('modal-agenda');
-  renderAgenda();verificarNotificacoes();
+  renderAgenda();
+  verificarNotificacoes();
 }
 
 function salvarAgendamentosLocal(){
   localStorage.setItem('crm_agendamentos',JSON.stringify(db.agendamentos));
 }
 
-function concluirAgendamento(id){
+async function concluirAgendamento(id){
   const ag=db.agendamentos.find(a=>String(a.id)===String(id));
-  if(ag)ag.concluido=true;
-  salvarAgendamentosLocal();renderAgenda();verificarNotificacoes();
+  if(ag){
+    ag.concluido=true;
+    salvarAgendamentosLocal();
+    api({action:'updateAgendamento',agendamento:ag}).catch(()=>{});
+  }
+  renderAgenda();verificarNotificacoes();
 }
 
 function excluirAgendamento(id){
   db.agendamentos=db.agendamentos.filter(a=>String(a.id)!==String(id));
-  salvarAgendamentosLocal();renderAgenda();verificarNotificacoes();
+  salvarAgendamentosLocal();
+  api({action:'deleteAgendamento',id}).catch(()=>{});
+  renderAgenda();verificarNotificacoes();
 }
 
 function renderAgenda(){
@@ -1322,42 +1382,80 @@ function renderAgenda(){
   const filtVend=document.getElementById('ag-fil-vend')?.value||'';
   const filtData=document.getElementById('ag-fil-data')?.value||'';
 
+  // Gerente vê todos; vendedor vê apenas os destinados a ele
   let lista=db.agendamentos.filter(a=>{
-    // Gerente vê todos; vendedor vê os seus (criados por qualquer um)
-    if(!isGerente() && a.vendedor!==usuarioAtual) return false;
-    if(filtVend && a.vendedor!==filtVend) return false;
+    if(!isGerente()&&a.vendedor!==usuarioAtual)return false;
+    if(filtVend&&a.vendedor!==filtVend)return false;
     if(filtData){
       const d=filtData.split('-');
       const dBR=d[2]+'/'+d[1]+'/'+d[0];
-      if(a.data!==filtData && normalizarData(a.data)!==dBR) return false;
+      if(a.data!==filtData&&normalizarData(a.data)!==dBR)return false;
     }
     return true;
-  }).sort((a,b)=>(a.data+a.hora).localeCompare(b.data+b.hora));
+  }).sort((a,b)=>{
+    // Pendentes primeiro, depois por data/hora
+    if(a.concluido!==b.concluido)return a.concluido?1:-1;
+    return(a.data+a.hora).localeCompare(b.data+b.hora);
+  });
 
   const el=document.getElementById('lista-agenda');
-  if(!lista.length){el.innerHTML='<p class="empty">nenhum agendamento</p>';return;}
+  if(!lista.length){
+    el.innerHTML='<p class="empty">Nenhum agendamento encontrado.</p>';
+    return;
+  }
 
   const agoraStr=new Date().toISOString().slice(0,16);
+  const meses=['','Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+
   el.innerHTML=lista.map(ag=>{
-    const cli=ag.cid!==null&&ag.cid!==undefined?(typeof ag.cid==='number'?db.clientes[ag.cid]:db.clientes.find(c=>normalizeId(c.id)===normalizeId(ag.cid))):null;
-    const agDT=ag.data+'T'+ag.hora;
+    // Resolve nome do cliente: usa cache cliNome ou busca pelo cid
+    let nomeCliente='Sem cliente';
+    if(ag.cliNome){
+      nomeCliente=ag.cliNome;
+    } else if(ag.cid){
+      const cli=db.clientes.find(c=>normalizeId(c.id)===normalizeId(String(ag.cid)));
+      if(cli)nomeCliente=cli.nome;
+    }
+
+    const agDT  =ag.data+'T'+ag.hora;
     const vencido=!ag.concluido&&agDT<=agoraStr;
-    const dataFmt=ag.data?(()=>{const p=ag.data.split('-');return p.length===3?p[2]+'/'+p[1]+'/'+p[0]:ag.data;})():'—';
     const [ano,mes,dia]=ag.data?ag.data.split('-'):['','',''];
-    const meses=['','Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
-    return`<div class="agenda-row" style="${ag.concluido?'opacity:.45':''}">
+    const dataFmt=dia&&mes&&ano?`${dia}/${mes}/${ano}`:'—';
+
+    // Badge de status
+    const statusBadge=ag.concluido
+      ?'<span style="font-size:11px;color:var(--green);font-family:\'JetBrains Mono\',monospace">✓ concluído</span>'
+      :vencido
+        ?'<span style="font-size:11px;color:var(--red);font-weight:600">⚠ vencido</span>'
+        :'<span style="font-size:11px;color:var(--blue)">pendente</span>';
+
+    // Criador (mostra se diferente do destinatário)
+    const criadoPorStr=ag.criadoPor&&ag.criadoPor!==ag.vendedor
+      ?`<span style="font-size:10px;color:var(--text3)">criado por ${ag.criadoPor}</span>`
+      :'';
+
+    return`<div class="agenda-row" style="${ag.concluido?'opacity:.5':''}">
       <div class="agenda-date">
         <div class="day">${dia||'—'}</div>
         <div class="month">${meses[parseInt(mes)]||''} ${ano}</div>
         <div class="time">${ag.hora}</div>
       </div>
       <div class="agenda-content" style="flex:1">
-        <div class="agenda-cliente">${cli?cli.nome:'Sem cliente'} ${vencido?'<span style="font-size:18px" class="agenda-bell">🔔</span>':''}</div>
+        <div class="agenda-cliente">
+          ${nomeCliente}
+          ${vencido&&!ag.concluido?'<span class="agenda-bell" style="font-size:16px;margin-left:4px">🔔</span>':''}
+        </div>
         <div class="agenda-motivo">${ag.motivo||'—'}</div>
-        <div class="agenda-vend">👤 ${ag.vendedor}</div>
+        <div style="display:flex;align-items:center;gap:8px;margin-top:4px;flex-wrap:wrap">
+          <span style="font-size:11px;color:var(--steel2)">👤 ${ag.vendedor}</span>
+          ${criadoPorStr}
+          ${statusBadge}
+        </div>
       </div>
       <div style="display:flex;flex-direction:column;gap:5px;align-items:flex-end;flex-shrink:0">
-        ${!ag.concluido?`<button class="btn btn-sm btn-ghost" onclick="concluirAgendamento('${ag.id}')">✓ Feito</button>`:'<span style="font-size:11px;color:var(--green);font-family:JetBrains Mono,monospace">concluído</span>'}
+        ${!ag.concluido
+          ?`<button class="btn btn-sm btn-ghost" onclick="concluirAgendamento('${ag.id}')">✓ Feito</button>`
+          :''}
         <button class="btn btn-sm btn-danger" onclick="excluirAgendamento('${ag.id}')">✕</button>
       </div>
     </div>`;
@@ -1367,22 +1465,29 @@ function renderAgenda(){
 function verificarNotificacoes(){
   if(!usuarioAtual)return;
   const agoraStr=new Date().toISOString().slice(0,16);
+  // Vendedor recebe alertas dos agendamentos destinados a ele
+  // Gerente recebe alertas de todos
   const pendentes=db.agendamentos.filter(a=>{
     if(a.concluido)return false;
-    // Vendedor recebe notificação de agendamentos destinados a ele
     if(!isGerente()&&a.vendedor!==usuarioAtual)return false;
     return(a.data+'T'+a.hora)<=agoraStr;
   });
   const badge=document.getElementById('notif-count');
   if(pendentes.length>0){
-    badge.style.display='flex';badge.textContent=pendentes.length;
-    if(pendentes.length>0&&'Notification' in window&&Notification.permission==='granted'){
-      pendentes.slice(0,1).forEach(a=>{
-        const cli=a.cid?db.clientes.find(c=>normalizeId(c.id)===normalizeId(a.cid)):null;
-        new Notification('🔔 Lembrete CRM',{body:(cli?cli.nome:'')+(a.motivo?' — '+a.motivo:''),icon:''});
+    badge.style.display='flex';
+    badge.textContent=String(pendentes.length);
+    if('Notification' in window&&Notification.permission==='granted'){
+      pendentes.slice(0,2).forEach(a=>{
+        try{
+          new Notification('🔔 Lembrete CRM — '+a.vendedor,{
+            body:(a.cliNome||'')+(a.motivo?' — '+a.motivo:''),
+          });
+        }catch(e){}
       });
     }
-  }else{badge.style.display='none';}
+  } else {
+    badge.style.display='none';
+  }
 }
 
 // ── GESTOR / RANKING ──────────────────────────────────────────────────────────
