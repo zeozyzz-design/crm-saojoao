@@ -1122,7 +1122,7 @@ function confirmarLig(){
 }
 
 // ── ALTERAR STATUS DE LIGAÇÃO ─────────────────────────────────────────────────
-function alterarStatusLig(ligId, novoStatus, cliRef){
+function alterarStatusLig(ligId, novoStatus){
   const lig=db.ligacoes.find(l=>normalizeId(String(l.id||''))===normalizeId(String(ligId)));
   if(!lig){toast('Ligação não encontrada.','err');return;}
   if(novoStatus==='nao_atendeu'){
@@ -1133,9 +1133,8 @@ function alterarStatusLig(ligId, novoStatus, cliRef){
   api({action:'updateLigacao',ligacao:lig})
     .then(()=>toast('Status atualizado!','ok'))
     .catch(()=>toast('Salvo localmente.','err'));
-  // Reabre o detalhe com a referência correta
-  const ref = cliRef!==undefined ? cliRef : modalCliId;
-  abrirDetalhe(ref);
+  // Reabre o detalhe usando modalCliId que está definido globalmente
+  abrirDetalhe(modalCliId);
   renderClientes(); renderDash();
 }
 
@@ -1254,7 +1253,8 @@ function abrirDetalhe(ref){
           <div style="display:flex;align-items:center;gap:6px;margin-top:4px">
             <span style="font-size:10px;color:var(--text3)">Alterar:</span>
             <select class="hist-status-sel"
-              onchange="alterarStatusLig('${ligId}', this.value, ${typeof cli._idx==='number'?cli._idx:'\\''+cidReal+'\\''})"
+            <select class="hist-status-sel"
+              onchange="alterarStatusLig('${ligId}', this.value)"
               title="Alterar status desta ligação">${selOptsCorrect}</select>
           </div>
           ${obsHtml}
