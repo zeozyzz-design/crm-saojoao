@@ -811,6 +811,47 @@ function normalizarData(raw){
   return s;
 }
 
+// Converte qualquer formato de data de agendamento para {ano, mes, dia, horaStr, isoStr}
+// Suporta: "2026-04-09", "09/04/2026", "1899-12-30T17:22:28.000Z" (ISO legado)
+function parseAgData(rawData, rawHora){
+  let ano='', mes='', dia='', horaStr=rawHora||'';
+
+  if(!rawData) return {ano,mes,dia,horaStr,isoStr:''};
+
+  const s = String(rawData).trim();
+
+  // ISO completo com hora: "2026-04-09T14:30:00.000Z" ou legado "1899-12-30T17:22:28.000Z"
+  if(s.includes('T') && s.includes('-')){
+    // Extrai só a parte da data e hora do ISO — ignora o "1899" legado
+    // A data real está no campo ag.data separado, a hora está aqui
+    const timePart = s.split('T')[1]||'';
+    // Extrai hh:mm do ISO time
+    const hhmm = timePart.slice(0,5);
+    if(hhmm && !horaStr) horaStr = hhmm;
+    // A data vem de rawData — se for "1899-..." é só hora, data real não está aqui
+    const datePart = s.split('T')[0];
+    const [y,m,d] = datePart.split('-');
+    if(parseInt(y) > 1900){ ano=y; mes=m; dia=d; }
+    // Se ano for 1899 (legado), data viria de outro campo — retorna só hora
+    return {ano, mes, dia, horaStr, isoStr:s};
+  }
+
+  // yyyy-mm-dd
+  if(/^\d{4}-\d{2}-\d{2}$/.test(s)){
+    const [y,m,d] = s.split('-');
+    return {ano:y, mes:m, dia:d, horaStr, isoStr:s+'T'+(horaStr||'00:00')};
+  }
+
+  // dd/mm/yyyy
+  if(/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(s)){
+    const [d,m,y] = s.split('/');
+    return {ano:y, mes:m.padStart(2,'0'), dia:d.padStart(2,'0'), horaStr,
+            isoStr:y+'-'+m.padStart(2,'0')+'-'+d.padStart(2,'0')+'T'+(horaStr||'00:00')};
+  }
+
+  return {ano:'', mes:'', dia:'', horaStr, isoStr:''};
+}
+
 function iniciais(n){return n.split(' ').slice(0,2).map(p=>p[0]).join('').toUpperCase();}
 function getVendedores(){return VENDEDORES.filter(v=>v!=='Gerencial');}
 function isGerente(){return usuarioAtual&&(GERENTES.includes(usuarioAtual));}
@@ -1070,7 +1111,9 @@ function abrirLig(ref){
   modalCliId=cli._idx!==undefined?cli._idx:normalizeId(cli.id);
   atendeuSel=null;resultadoSel=null;canalSel=null;
   document.getElementById('ml-titulo').textContent='Registrar Contato';
-  document.getElementById('ml-sub').textContent=cli?cli.nome:'';
+  // Mostra nome + telefone para agilizar a discagem
+  const telExib = cli&&cli.telefone ? ' · 📞 '+cli.telefone : '';
+  document.getElementById('ml-sub').textContent = cli ? cli.nome + telExib : '';
   ['ligacao','whatsapp','visita'].forEach(id=>document.getElementById('canal-'+id).classList.remove('sel'));
   setCanal('ligacao');
   // pré-selecionar vendedor logado ou do cadastro
@@ -1417,9 +1460,14 @@ function renderAgenda(){
       if(cli)nomeCliente=cli.nome;
     }
 
-    const agDT  =ag.data+'T'+ag.hora;
+    // Parsea a data robustamente — suporta formato legado ISO e yyyy-mm-dd
+    const pd    = parseAgData(ag.data, ag.hora);
+    const ano   = pd.ano;
+    const mes   = pd.mes;
+    const dia   = pd.dia;
+    const horaExib = pd.horaStr || ag.hora || '—';
+    const agDT  = pd.isoStr || (ag.data+'T'+(ag.hora||'00:00'));
     const vencido=!ag.concluido&&agDT<=agoraStr;
-    const [ano,mes,dia]=ag.data?ag.data.split('-'):['','',''];
     const dataFmt=dia&&mes&&ano?`${dia}/${mes}/${ano}`:'—';
 
     // Badge de status
@@ -1438,7 +1486,7 @@ function renderAgenda(){
       <div class="agenda-date">
         <div class="day">${dia||'—'}</div>
         <div class="month">${meses[parseInt(mes)]||''} ${ano}</div>
-        <div class="time">${ag.hora}</div>
+        <div class="time">${horaExib}</div>
       </div>
       <div class="agenda-content" style="flex:1">
         <div class="agenda-cliente">
