@@ -1111,9 +1111,12 @@ function abrirLig(ref){
   modalCliId=cli._idx!==undefined?cli._idx:normalizeId(cli.id);
   atendeuSel=null;resultadoSel=null;canalSel=null;
   document.getElementById('ml-titulo').textContent='Registrar Contato';
-  // Mostra nome + telefone para agilizar a discagem
-  const telExib = cli&&cli.telefone ? ' · 📞 '+cli.telefone : '';
-  document.getElementById('ml-sub').textContent = cli ? cli.nome + telExib : '';
+  // Nome na primeira linha, telefone na segunda
+  const telExib = cli&&cli.telefone ? '📞 '+cli.telefone : '';
+  document.getElementById('ml-sub').innerHTML = cli
+    ? `<span style="color:var(--text2);font-size:13px;font-weight:500">${cli.nome}</span>`
+      + (telExib ? `<br><span style="font-size:12px;color:var(--text3)">${telExib}</span>` : '')
+    : '';
   ['ligacao','whatsapp','visita'].forEach(id=>document.getElementById('canal-'+id).classList.remove('sel'));
   setCanal('ligacao');
   // pré-selecionar vendedor logado ou do cadastro
