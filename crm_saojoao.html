@@ -251,7 +251,7 @@ label:first-child{margin-top:0}
         <option value="">Selecione seu nome</option>
         <option>Ana</option><option>Cris</option><option>Eder</option><option>Mara</option>
         <option>Marilia</option><option>Pamela</option><option>Rafaela</option>
-        <option>Marcelo</option><option>Matheus</option><option>Gerencial</option>
+        <option>Matheus</option><option>Gerencial</option>
       </select>
       <label>Senha</label>
       <input type="password" id="login-pwd" maxlength="4" placeholder="••••" oninput="this.value=this.value.replace(/\D/g,'').slice(0,4)">
@@ -281,7 +281,7 @@ label:first-child{margin-top:0}
       <button class="qbtn" id="canal-visita" onclick="setCanal('visita')">🤝 Visita</button>
     </div>
     <label style="margin-top:0">Vendedor que fez o contato</label>
-    <select id="ml-vendedor"><option value="">Selecione</option><option>Ana</option><option>Cris</option><option>Eder</option><option>Mara</option><option>Marilia</option><option>Pamela</option><option>Rafaela</option><option>Marcelo</option></select>
+    <select id="ml-vendedor"><option value="">Selecione</option><option>Ana</option><option>Cris</option><option>Eder</option><option>Mara</option><option>Marilia</option><option>Pamela</option><option>Rafaela</option><option>Matheus</option></select>
     <div style="font-size:11px;color:var(--steel2);text-transform:uppercase;letter-spacing:1px;font-family:'JetBrains Mono',monospace;margin:14px 0 6px">O contato foi atendido?</div>
     <div class="qbtns">
       <button class="qbtn" id="btn-sim" onclick="setAtendeu(true)">✓ Atendeu</button>
@@ -351,7 +351,7 @@ label:first-child{margin-top:0}
       </div>
     </div>
     <label>Vendedor responsável</label>
-    <select id="e-vend"><option value="">Selecione</option><option>Ana</option><option>Cris</option><option>Eder</option><option>Mara</option><option>Marilia</option><option>Pamela</option><option>Rafaela</option><option>Marcelo</option></select>
+    <select id="e-vend"><option value="">Selecione</option><option>Ana</option><option>Cris</option><option>Eder</option><option>Mara</option><option>Marilia</option><option>Pamela</option><option>Rafaela</option><option>Matheus</option></select>
     <label>Observação do cadastro</label>
     <textarea id="e-obs" placeholder="Informações importantes sobre este cliente..."></textarea>
     <div style="display:flex;justify-content:space-between;align-items:center;margin-top:20px;flex-wrap:wrap;gap:8px">
@@ -382,7 +382,7 @@ label:first-child{margin-top:0}
     <div class="modal-title">📅 Novo agendamento</div>
     <div class="modal-sub" id="ag-cliente-nome" style="margin-top:4px"></div>
     <label style="margin-top:0">Vendedor</label>
-    <select id="ag-vend"><option value="">Selecione</option><option>Ana</option><option>Cris</option><option>Eder</option><option>Mara</option><option>Marilia</option><option>Pamela</option><option>Rafaela</option><option>Marcelo</option></select>
+    <select id="ag-vend"><option value="">Selecione</option><option>Ana</option><option>Cris</option><option>Eder</option><option>Mara</option><option>Marilia</option><option>Pamela</option><option>Rafaela</option><option>Matheus</option></select>
     <div class="grid2">
       <div><label>Data</label><input type="date" id="ag-data"></div>
       <div><label>Hora</label><input type="time" id="ag-hora"></div>
@@ -620,7 +620,7 @@ label:first-child{margin-top:0}
             </div>
           </div>
           <label>Vendedor responsável</label>
-          <select id="c-vend"><option value="">Selecione</option><option>Ana</option><option>Cris</option><option>Eder</option><option>Mara</option><option>Marilia</option><option>Pamela</option><option>Rafaela</option><option>Marcelo</option></select>
+          <select id="c-vend"><option value="">Selecione</option><option>Ana</option><option>Cris</option><option>Eder</option><option>Mara</option><option>Marilia</option><option>Pamela</option><option>Rafaela</option><option>Matheus</option></select>
           <label>Observação do cadastro (opcional)</label>
           <textarea id="c-obs" placeholder="Informações importantes sobre este cliente..."></textarea>
           <div style="display:flex;justify-content:flex-end;margin-top:16px">
@@ -651,7 +651,7 @@ function gerarId(prefix=''){
 }
 
 // ── AUTENTICAÇÃO ─────────────────────────────────────────────────────────────
-const VENDEDORES=['Ana','Cris','Eder','Mara','Marilia','Pamela','Rafaela','Marcelo','Matheus','Gerencial'];
+const VENDEDORES=['Ana','Cris','Eder','Mara','Marilia','Pamela','Rafaela','Matheus','Gerencial'];
 const GERENTES=['Marcelo','Matheus','Gerencial'];
 let usuarioAtual=null;
 
@@ -1327,7 +1327,7 @@ function toggleObs(ligId){
 
 // ── AGENDAMENTOS ──────────────────────────────────────────────────────────────
 // Regras de visibilidade:
-// - Gerente (Marcelo, Matheus, Gerencial): vê e cria para qualquer vendedor
+// - Gerente (Matheus, Gerencial): vê e cria para qualquer vendedor
 // - Vendedor: vê apenas agendamentos onde a.vendedor === usuarioAtual (próprios + atribuídos)
 
 function podeCriarParaOutros(){
