@@ -550,8 +550,12 @@ label:first-child{margin-top:0}
           <select id="dash-vend" onchange="renderDash()" style="max-width:175px"><option value="">Toda a equipe</option></select>
           <select id="dash-cidade" onchange="renderDash()" style="max-width:175px"><option value="">Todas as cidades</option></select>
           <div style="display:flex;flex-direction:column;gap:3px">
-            <span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--steel2);text-transform:uppercase;letter-spacing:1px">Data</span>
-            <input type="date" id="dash-data-unica" onchange="renderDash()" style="width:160px;padding:7px 10px;font-size:12px">
+            <span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--steel2);text-transform:uppercase;letter-spacing:1px">Data inicial</span>
+            <input type="date" id="dash-data-ini" onchange="renderDash()" style="width:150px;padding:7px 10px;font-size:12px">
+          </div>
+          <div style="display:flex;flex-direction:column;gap:3px">
+            <span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--steel2);text-transform:uppercase;letter-spacing:1px">Data final</span>
+            <input type="date" id="dash-data-fim" onchange="renderDash()" style="width:150px;padding:7px 10px;font-size:12px">
           </div>
           <button class="btn btn-sm" onclick="limparFiltrosDash()" style="align-self:flex-end">Limpar</button>
         </div>
@@ -856,8 +860,12 @@ function iniciais(n){return n.split(' ').slice(0,2).map(p=>p[0]).join('').toUppe
 function getVendedores(){return VENDEDORES.filter(v=>v!=='Gerencial');}
 function isGerente(){return usuarioAtual&&(GERENTES.includes(usuarioAtual));}
 
+// Usuários com acesso a ver todos os clientes
+const PODE_VER_TODOS=['Marcelo','Matheus','Gerencial'];
+
 function clientesVisiveis(){
-  if(isGerente())return db.clientes;
+  // Gerentes e Matheus veem toda a base
+  if(PODE_VER_TODOS.includes(usuarioAtual)) return db.clientes;
   return db.clientes.filter(c=>c.vendedor===usuarioAtual);
 }
 
@@ -900,7 +908,7 @@ function poblarSelects(){
     el.innerHTML=first+vs.map(v=>`<option value="${v}">${v}</option>`).join('');
     el.value=val;
     // vendedor filtro: se não é gerente, lock no próprio
-    if(id==='fil-vend'&&!isGerente()){el.value=usuarioAtual;el.disabled=true;}
+    if(id==='fil-vend'&&!PODE_VER_TODOS.includes(usuarioAtual)){el.value=usuarioAtual;el.disabled=true;}
     else if(id==='fil-vend'){el.disabled=false;}
   });
 }
@@ -1584,7 +1592,7 @@ function renderRanking(){
 
 // ── DASHBOARD ─────────────────────────────────────────────────────────────────
 function parseBR(d){if(!d)return null;const p=d.split('/');if(p.length===3)return new Date(p[2],p[1]-1,p[0]);return null;}
-function limparFiltrosDash(){['dash-vend','dash-cidade','dash-data-unica'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});renderDash();}
+function limparFiltrosDash(){['dash-vend','dash-cidade','dash-data-ini','dash-data-fim'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});renderDash();}
 function poblarCidades(){
   const el=document.getElementById('dash-cidade');if(!el)return;
   const val=el.value;
@@ -1592,13 +1600,31 @@ function poblarCidades(){
   el.innerHTML='<option value="">Todas as cidades</option>'+cids.map(c=>`<option value="${c}">${c}</option>`).join('');
   el.value=val;
 }
+function isoParaBR(iso){
+  if(!iso)return'';
+  const p=iso.split('-');
+  return p.length===3?p[2]+'/'+p[1]+'/'+p[0]:'';
+}
+function brParaDate(br){
+  if(!br)return null;
+  const p=br.split('/');
+  if(p.length!==3)return null;
+  return new Date(p[2],p[1]-1,p[0]);
+}
+
 function renderDash(){
   poblarSelects();poblarCidades();
-  const vend=document.getElementById('dash-vend').value;
+  const vend  =document.getElementById('dash-vend').value;
   const cidade=document.getElementById('dash-cidade').value;
-  const dataUnica=document.getElementById('dash-data-unica').value;
-  let dataFiltro='';
-  if(dataUnica){const p=dataUnica.split('-');dataFiltro=p[2]+'/'+p[1]+'/'+p[0];}
+  const iniISO=document.getElementById('dash-data-ini').value;
+  const fimISO=document.getElementById('dash-data-fim').value;
+  const iniBR =isoParaBR(iniISO);
+  const fimBR =isoParaBR(fimISO);
+  const dIni  =brParaDate(iniBR);
+  const dFim  =brParaDate(fimBR);
+
+  // Intervalo com hora zerada no início e 23:59 no fim
+  if(dFim) dFim.setHours(23,59,59,999);
 
   let clis=clientesVisiveis().filter(c=>{
     const vOk=!vend||c.vendedor===vend;
@@ -1608,14 +1634,22 @@ function renderDash(){
   const ids=new Set(clis.map(c=>normalizeId(c.id)));
   let ligs=db.ligacoes.filter(l=>{
     if(!ids.has(normalizeId(l.cid)))return false;
-    if(dataFiltro&&normalizarData(l.data)!==dataFiltro)return false;
+    if(dIni||dFim){
+      const ld=brParaDate(normalizarData(l.data));
+      if(!ld)return false;
+      if(dIni&&ld<dIni)return false;
+      if(dFim&&ld>dFim)return false;
+    }
     return true;
   });
 
   const filtros=[];
   if(vend)filtros.push('Vendedor: '+vend);
   if(cidade)filtros.push('Cidade: '+cidade);
-  if(dataFiltro)filtros.push('Dia: '+dataFiltro);
+  if(iniBR&&fimBR)filtros.push('Período: '+iniBR+' → '+fimBR);
+  else if(iniBR)filtros.push('A partir de: '+iniBR);
+  else if(fimBR)filtros.push('Até: '+fimBR);
+  const temPeriodo=!!(dIni||dFim);
   const fb=document.getElementById('dash-filtro-ativo');
   if(filtros.length){fb.style.display='block';fb.textContent='Filtros: '+filtros.join(' · ');}
   else{fb.style.display='none';}
@@ -1628,7 +1662,7 @@ function renderDash(){
   const taxa=totalLigsCount?Math.round(fechados/totalLigsCount*100):0;
 
   document.getElementById('kpi-cards').innerHTML=`
-    <div class="metric blue"><div class="metric-val">${totalLigsCount}</div><div class="metric-label">Ligações${dataFiltro?' (dia)':''}</div></div>
+    <div class="metric blue"><div class="metric-val">${totalLigsCount}</div><div class="metric-label">Ligações${temPeriodo?' (período)':''}</div></div>
     <div class="metric green"><div class="metric-val" style="color:var(--green)">${fechados}</div><div class="metric-label">Fechados</div></div>
     <div class="metric red"><div class="metric-val" style="color:var(--red)">${perdidos}</div><div class="metric-label">Perdidos</div></div>
     <div class="metric amber"><div class="metric-val" style="color:var(--amber)">${quentes}</div><div class="metric-label">Alta chance</div></div>
@@ -1657,7 +1691,7 @@ function renderDash(){
 
   const diasEl=document.getElementById('ch-dias');
   if(diasEl){
-    if(dataFiltro){
+    if(temPeriodo){
       const cc={ligacao:0,whatsapp:0,visita:0};
       ligs.forEach(l=>{cc[l.canal||'ligacao']=(cc[l.canal||'ligacao']||0)+1;});
       const tot=ligs.length||1;
@@ -1666,7 +1700,7 @@ function renderDash(){
         <div class="bar-row"><span class="bar-label">💬 WhatsApp</span><div class="bar-track"><div class="bar-fill" style="width:${Math.round(cc.whatsapp/tot*100)}%;background:var(--green)"></div></div><span class="bar-count">${cc.whatsapp}</span></div>
         <div class="bar-row"><span class="bar-label">🤝 Visitas</span><div class="bar-track"><div class="bar-fill" style="width:${Math.round(cc.visita/tot*100)}%;background:var(--orange)"></div></div><span class="bar-count">${cc.visita}</span></div>`;
       document.getElementById('card-dias').style.display='block';
-    }else{document.getElementById('card-dias').style.display='none';}
+    } else {document.getElementById('card-dias').style.display='none';}
   }
 }
 
