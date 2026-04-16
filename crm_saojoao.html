@@ -431,6 +431,10 @@ label:first-child{margin-top:0}
         <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="6" r="3"/><path d="M2 14c0-3.31 2.69-6 6-6s6 2.69 6 6"/><path d="M12 3v4m-2-2h4"/></svg>
         <span>Cadastrar</span>
       </div>
+      <div class="nav-item" id="nav-config" onclick="showScreen('config',this)" style="display:none">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="2"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2M3.05 3.05l1.41 1.41M11.54 11.54l1.41 1.41M3.05 12.95l1.41-1.41M11.54 4.46l1.41-1.41"/></svg>
+        <span>Configurações</span>
+      </div>
     </nav>
     <div class="sidebar-foot">
       <div class="user-pill" id="user-pill">
@@ -471,7 +475,7 @@ label:first-child{margin-top:0}
           <select id="fil-vend" onchange="renderClientes()" style="max-width:155px"></select>
           <select id="fil-status" onchange="renderClientes()" style="max-width:155px">
             <option value="">Todos status</option>
-            <option value="interessado">Interessado</option>
+            <option value="interessado">Sem Interesse</option>
             <option value="negociacao">Em negociação</option>
             <option value="fechado">Fechado</option>
             <option value="perdido">Perdido</option>
@@ -583,7 +587,7 @@ label:first-child{margin-top:0}
       <div id="screen-importar" class="screen">
         <div class="card">
           <div class="card-title">Importar via CSV</div>
-          <div class="infobox">Colunas: nome · telefone · cidade · uf · vendedor</div>
+          <div class="infobox">Colunas aceitas: <strong>nome</strong> (obrigatório) · telefone · endereco · bairro · cidade · uf · vendedor · obs · dataCadastro · id (opcional)</div>
           <div class="upload-zone" onclick="document.getElementById('csv-file').click()">
             <div style="font-size:14px;font-weight:600;color:var(--text2)">Clique para selecionar</div>
             <div style="font-size:11px;color:var(--text3);margin-top:6px;font-family:'JetBrains Mono',monospace">.csv · UTF-8 · vírgula ou ponto e vírgula</div>
@@ -633,6 +637,33 @@ label:first-child{margin-top:0}
         </div>
       </div>
 
+      <!-- CONFIGURAÇÕES (somente Gerencial) -->
+      <div id="screen-config" class="screen">
+        <div class="card" style="max-width:600px">
+          <div class="card-title">Permissões por usuário</div>
+          <p style="font-size:12px;color:var(--text3);margin-bottom:16px;font-family:'JetBrains Mono',monospace">Habilite ou desabilite funções para cada vendedor. As alterações são salvas automaticamente.</p>
+          <div id="config-permissoes-lista">
+            <div class="loading"><div class="spin"></div>Carregando...</div>
+          </div>
+        </div>
+        <div class="card" style="max-width:600px">
+          <div class="card-title">Gerenciar senhas</div>
+          <p style="font-size:12px;color:var(--text3);margin-bottom:16px;font-family:'JetBrains Mono',monospace">Redefina a senha de qualquer usuário para o padrão <strong>1234</strong> (forçará troca no próximo acesso).</p>
+          <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap">
+            <div style="flex:1;min-width:160px">
+              <label style="margin-top:0">Usuário</label>
+              <select id="config-reset-user">
+                <option value="">Selecione</option>
+                <option>Ana</option><option>Cris</option><option>Eder</option><option>Mara</option>
+                <option>Marilia</option><option>Pamela</option><option>Rafaela</option><option>Matheus</option>
+              </select>
+            </div>
+            <button class="btn btn-danger" onclick="resetarSenha()">Redefinir para 1234</button>
+          </div>
+          <div id="config-reset-msg" style="margin-top:10px;font-size:12px;display:none"></div>
+        </div>
+      </div>
+
     </div>
   </main>
 </div>
@@ -659,48 +690,70 @@ const VENDEDORES=['Ana','Cris','Eder','Mara','Marilia','Pamela','Rafaela','Mathe
 const GERENTES=['Marcelo','Matheus','Gerencial'];
 let usuarioAtual=null;
 
-function getSenhas(){
-  try{return JSON.parse(localStorage.getItem('crm_senhas')||'{}')}catch{return{}}
+// ── AUTENTICAÇÃO VIA SHEETS ──────────────────────────────────────────────────
+// Senhas ficam na aba "usuarios" do Sheets (coluna: usuario, senha, primeiroAcesso)
+// localStorage só guarda a sessão ativa (nome do usuário logado neste dispositivo)
+// Validação real acontece sempre no Sheets — impede acesso em outro computador
+
+function getSessionUser(){
+  // Apenas memória de sessão — não contém senha, só o nome do usuário logado
+  try{ return sessionStorage.getItem('crm_session_user')||null; }catch{return null;}
 }
-function setSenha(user,pwd){
-  const s=getSenhas();s[user]=pwd;
-  localStorage.setItem('crm_senhas',JSON.stringify(s));
+function setSessionUser(u){
+  try{ sessionStorage.setItem('crm_session_user', u||''); }catch{}
 }
-function getSenha(user){
-  const s=getSenhas();
-  return s[user]||'1234'; // padrão
-}
-function isPrimeiroacesso(user){
-  const s=getSenhas();
-  return !s[user]; // sem senha salva = primeiro acesso
+function clearSession(){
+  try{ sessionStorage.removeItem('crm_session_user'); }catch{}
 }
 
-function fazerLogin(){
+async function fazerLogin(){
   const user=document.getElementById('login-user').value;
   const pwd=document.getElementById('login-pwd').value;
   const err=document.getElementById('login-err');
+  const btn=document.querySelector('#login-form .btn-primary');
   if(!user){err.style.display='block';err.textContent='Selecione seu nome.';return;}
   if(!pwd){err.style.display='block';err.textContent='Digite sua senha.';return;}
-  if(pwd!==getSenha(user)){err.style.display='block';err.textContent='Senha incorreta.';return;}
-  if(isPrimeiroacesso(user)){
-    // primeiro acesso → tela de troca
-    document.getElementById('login-form').style.display='none';
-    document.getElementById('troca-form').style.display='block';
-    err.style.display='none';
-    usuarioAtual=user;
-    return;
+  err.style.display='none';
+  if(btn){btn.textContent='Verificando...';btn.disabled=true;}
+  try{
+    const res=await api({action:'validarLogin',usuario:user,senha:pwd});
+    if(res.erro){
+      err.style.display='block';
+      err.textContent=res.erro;
+      if(btn){btn.textContent='Entrar';btn.disabled=false;}
+      return;
+    }
+    if(res.primeiroAcesso){
+      document.getElementById('login-form').style.display='none';
+      document.getElementById('troca-form').style.display='block';
+      usuarioAtual=user;
+      if(btn){btn.textContent='Entrar';btn.disabled=false;}
+      return;
+    }
+    setSessionUser(user);
+    entrarNoApp(user);
+  }catch(e){
+    err.style.display='block';
+    err.textContent='Erro de conexão. Tente novamente.';
+    if(btn){btn.textContent='Entrar';btn.disabled=false;}
   }
-  entrarNoApp(user);
 }
 
-function trocarSenha(){
+async function trocarSenha(){
   const p1=document.getElementById('nova-pwd1').value;
   const p2=document.getElementById('nova-pwd2').value;
   const err=document.getElementById('login-err');
   if(p1.length!==4){err.style.display='block';err.textContent='A senha deve ter 4 dígitos.';return;}
+  if(!/^\d{4}$/.test(p1)){err.style.display='block';err.textContent='Apenas números.';return;}
   if(p1!==p2){err.style.display='block';err.textContent='As senhas não coincidem.';return;}
-  setSenha(usuarioAtual,p1);
-  entrarNoApp(usuarioAtual);
+  try{
+    const res=await api({action:'trocarSenha',usuario:usuarioAtual,novaSenha:p1});
+    if(res.erro){err.style.display='block';err.textContent=res.erro;return;}
+    setSessionUser(usuarioAtual);
+    entrarNoApp(usuarioAtual);
+  }catch(e){
+    err.style.display='block';err.textContent='Erro ao salvar. Tente novamente.';
+  }
 }
 
 function entrarNoApp(user){
@@ -710,13 +763,29 @@ function entrarNoApp(user){
   document.getElementById('user-avatar').textContent=user[0].toUpperCase();
   document.getElementById('user-pill-name').textContent=user;
   document.getElementById('user-pill-role').textContent=GERENTES.includes(user)?'Gerente':'Vendedor';
-  // ocultar gestor/dash para vendedores comuns (opcional — mostramos para todos)
+  // Configurações só para Gerencial
+  const navConfig=document.getElementById('nav-config');
+  if(navConfig) navConfig.style.display=user==='Gerencial'?'flex':'none';
+  // Adicionar ids aos nav items para controle de permissões
+  document.querySelectorAll('.nav-item').forEach(el=>{
+    const onclick=el.getAttribute('onclick')||'';
+    if(onclick.includes("'importar'"))el.id='nav-importar';
+    if(onclick.includes("'dash'"))el.id='nav-dash';
+  });
+  // Sincronizar permissões do Sheets antes de aplicar
+  api({action:'getPermissoes'}).then(res=>{
+    if(res&&!res.erro){
+      localStorage.setItem('crm_permissoes',JSON.stringify(res));
+    }
+    aplicarPermissoesUI();
+  }).catch(()=>aplicarPermissoesUI());
   syncAll();
   verificarNotificacoes();
   setInterval(verificarNotificacoes,60000);
 }
 
 function fazerLogout(){
+  clearSession();
   usuarioAtual=null;
   document.getElementById('app').style.display='none';
   document.getElementById('login-screen').style.display='flex';
@@ -887,7 +956,7 @@ function diasDesdeUltimaLig(cid){
 function isInativo(cid){const d=diasDesdeUltimaLig(cid);return d!==null&&d>=DIAS_INATIVO;}
 
 function badgeStatus(s){
-  const m={interessado:['b-azul','Interessado'],negociacao:['b-amarelo','Em negociação'],fechado:['b-verde','Fechado'],perdido:['b-vermelho','Perdido'],sem_contato:['b-cinza','Sem contato'],nao_atendeu:['b-cinza','Não atendeu']};
+  const m={interessado:['b-azul','Sem Interesse'],negociacao:['b-amarelo','Em negociação'],fechado:['b-verde','Fechado'],perdido:['b-vermelho','Perdido'],sem_contato:['b-cinza','Sem contato'],nao_atendeu:['b-cinza','Não atendeu']};
   const[c,l]=m[s]||['b-cinza',s];
   return`<span class="badge ${c}">${l}</span>`;
 }
@@ -1075,6 +1144,10 @@ function salvarEdicao(){
   poblarSelects();renderMsItems();renderClientes();renderDash();renderRanking();
 }
 function confirmarExclusao(){
+  if(!temPermissao('excluirCadastro')){
+    toast('Você não tem permissão para excluir cadastros.','err');
+    return;
+  }
   const cli=typeof editCliId==='number'?db.clientes[editCliId]:db.clientes.find(c=>normalizeId(c.id)===normalizeId(editCliId));
   if(!cli)return;
   document.getElementById('del-nome').textContent=cli.nome;
@@ -1149,7 +1222,7 @@ function setAtendeu(v){
   else{
     rs.style.display='block';resultadoSel=null;
     document.getElementById('res-btns').innerHTML=[
-      {v:'interessado',l:'Interessado'},{v:'negociacao',l:'Em negociação'},
+      {v:'interessado',l:'Sem Interesse'},{v:'negociacao',l:'Em negociação'},
       {v:'fechado',l:'Fechado'},{v:'perdido',l:'Perdido'}
     ].map(b=>`<button class="qbtn" id="rb-${b.v}" onclick="setRes('${b.v}')" style="min-width:0;width:100%">${b.l}</button>`).join('');
     document.getElementById('motivo-section').style.display='none';
@@ -1256,7 +1329,7 @@ function abrirDetalhe(ref){
 
   const statusOpts  = ['interessado','negociacao','fechado','perdido','nao_atendeu'];
   const statusLabel = {
-    interessado:'Interessado', negociacao:'Em negociação',
+    interessado:'Sem Interesse', negociacao:'Em negociação',
     fechado:'Fechado', perdido:'Perdido', nao_atendeu:'Não atendeu'
   };
   const motivoLabel = {preco:'Preço', prazo:'Prazo', outro:'Outro'};
@@ -1673,7 +1746,7 @@ function renderDash(){
     const ligsC=ligs.filter(l=>normalizeId(l.cid)===normalizeId(c.id)&&l.atendeu&&l.resultado);
     sc[ligsC.length?ligsC[ligsC.length-1].resultado:'sem_contato']=(sc[ligsC.length?ligsC[ligsC.length-1].resultado:'sem_contato']||0)+1;
   });
-  const scL={interessado:'Interessado',negociacao:'Em negociação',fechado:'Fechado',perdido:'Perdido',sem_contato:'Sem contato'};
+  const scL={interessado:'Sem Interesse',negociacao:'Em negociação',fechado:'Fechado',perdido:'Perdido',sem_contato:'Sem contato'};
   const scC={interessado:'var(--blue)',negociacao:'var(--amber)',fechado:'var(--green)',perdido:'var(--red)',sem_contato:'var(--steel)'};
   document.getElementById('ch-status').innerHTML=total?Object.entries(sc).filter(([,v])=>v>0).map(([k,v])=>`<div class="bar-row"><span class="bar-label">${scL[k]}</span><div class="bar-track"><div class="bar-fill" style="width:${Math.round(v/total*100)}%;background:${scC[k]}"></div></div><span class="bar-count">${v}</span></div>`).join(''):'<p class="empty">sem dados</p>';
 
@@ -1706,6 +1779,7 @@ function renderDash(){
 
 // ── IMPORTAR / EXPORTAR ───────────────────────────────────────────────────────
 function importarCSV(input){
+  if(!temPermissao('subirArquivo')){toast('Você não tem permissão para importar arquivos.','err');return;}
   const file=input.files[0];if(!file)return;
   const reader=new FileReader();
   reader.onload=async e=>{
@@ -1731,8 +1805,17 @@ function importarCSV(input){
   reader.readAsText(file,'UTF-8');
 }
 function baixarModelo(){
-  const csv='nome,telefone,cidade,uf,vendedor\nJoão Silva,(35) 99999-0001,Pouso Alegre,MG,Ana';
-  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download='modelo.csv';a.click();
+  // Colunas espelhando exatamente a base de dados (mesma ordem do Sheets)
+  const header='id,nome,telefone,endereco,bairro,cidade,uf,vendedor,obs,dataCadastro';
+  const ex1=',(DEIXE VAZIO - gerado automatico),Nome completo do cliente,(35) 99999-0001,Rua das Flores 100,Centro,Pouso Alegre,MG,Ana,Observações sobre o cliente,15/04/2026';
+  const ex2=',(DEIXE VAZIO - gerado automatico),Empresa ABC Ltda,(11) 98888-0002,Av. Paulista 500,Bela Vista,São Paulo,SP,Cris,,';
+  const ex3=',(DEIXE VAZIO - gerado automatico),João da Silva,(35) 97777-0003,,,Itajubá,MG,Mara,,';
+  const descRow='# INSTRUÇÕES: id deixe vazio (preenchido automaticamente). Campos obrigatórios: nome. Demais são opcionais.';
+  const csv=[header,descRow,ex1,ex2,ex3].join('\n');
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));
+  a.download='modelo_importacao_clientes.csv';
+  a.click();
 }
 function exportarLigacoes(){
   const h='cliente,vendedor,canal,cidade,uf,data,hora,atendeu,resultado,motivo,observacao';
@@ -1752,7 +1835,88 @@ function exportarClientes(){
 }
 
 // ── NAVEGAÇÃO ─────────────────────────────────────────────────────────────────
-const pageTitles={clientes:['Clientes','base de contatos'],agenda:['Agendamentos','lembretes e follow-ups'],gestor:['Gestor / Meta','ranking e metas diárias'],dash:['Dashboard','análise de performance'],importar:['Importar CSV','carregar base'],cad:['Cadastrar','novo cliente']};
+const pageTitles={clientes:['Clientes','base de contatos'],agenda:['Agendamentos','lembretes e follow-ups'],gestor:['Gestor / Meta','ranking e metas diárias'],dash:['Dashboard','análise de performance'],importar:['Importar CSV','carregar base'],cad:['Cadastrar','novo cliente'],config:['Configurações','permissões e senhas']};
+
+// ── PERMISSÕES ────────────────────────────────────────────────────────────────
+// Funções controláveis pelo Gerencial
+const FUNCOES_CONFIG=[
+  {id:'excluirCadastro',   label:'Excluir cadastros de clientes'},
+  {id:'acessarOutraBase',  label:'Acessar outra base de clientes'},
+  {id:'acessarDash',       label:'Acesso ao Dashboard completo'},
+  {id:'subirArquivo',      label:'Importar clientes por arquivo CSV'},
+];
+
+// Carrega permissões do localStorage (gerencial salva, vendedor lê)
+function getPermissoes(){
+  try{ return JSON.parse(localStorage.getItem('crm_permissoes')||'{}'); }catch{ return {}; }
+}
+function salvarPermissoes(p){
+  localStorage.setItem('crm_permissoes', JSON.stringify(p));
+  // Sincroniza no Sheets em background
+  api({action:'salvarPermissoes',permissoes:p}).catch(()=>{});
+}
+function temPermissao(funcaoId){
+  // Gerentes têm tudo sempre
+  if(isGerente()) return true;
+  const p=getPermissoes();
+  // Se não configurado, padrão é HABILITADO
+  return p[usuarioAtual]?.[funcaoId]!==false;
+}
+
+function renderConfigPermissoes(){
+  const vendedores=VENDEDORES.filter(v=>!GERENTES.includes(v)&&v!=='Gerencial');
+  const p=getPermissoes();
+  document.getElementById('config-permissoes-lista').innerHTML=vendedores.map(v=>{
+    const rows=FUNCOES_CONFIG.map(f=>{
+      const enabled=p[v]?.[f.id]!==false;
+      return `<label style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--border);cursor:pointer;font-size:13px;color:var(--text2)">
+        <input type="checkbox" ${enabled?'checked':''} onchange="togglePermissao('${v}','${f.id}',this.checked)"
+          style="width:16px;height:16px;accent-color:var(--orange);cursor:pointer;flex-shrink:0">
+        ${f.label}
+      </label>`;
+    }).join('');
+    return `<div style="margin-bottom:18px">
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;color:var(--orange);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;padding-bottom:6px;border-bottom:1px solid var(--orange-dim)">👤 ${v}</div>
+      ${rows}
+    </div>`;
+  }).join('');
+}
+
+function togglePermissao(usuario, funcaoId, habilitado){
+  const p=getPermissoes();
+  if(!p[usuario]) p[usuario]={};
+  p[usuario][funcaoId]=habilitado;
+  salvarPermissoes(p);
+  toast(`${usuario}: ${funcaoId} ${habilitado?'habilitado':'desabilitado'}`,'ok');
+}
+
+async function resetarSenha(){
+  const user=document.getElementById('config-reset-user').value;
+  const msg=document.getElementById('config-reset-msg');
+  if(!user){toast('Selecione um usuário.','err');return;}
+  try{
+    const res=await api({action:'resetarSenha',usuario:user});
+    if(res.erro){msg.style.display='block';msg.style.color='var(--red)';msg.textContent=res.erro;return;}
+    msg.style.display='block';msg.style.color='var(--green)';
+    msg.textContent=`Senha de ${user} redefinida para 1234. Será solicitada troca no próximo acesso.`;
+    toast('Senha redefinida!','ok');
+  }catch(e){
+    msg.style.display='block';msg.style.color='var(--red)';msg.textContent='Erro ao conectar com o servidor.';
+  }
+}
+
+// Aplica restrições de permissão na UI após login
+function aplicarPermissoesUI(){
+  if(isGerente()) return; // gerentes não têm restrições
+  // Importar CSV
+  if(!temPermissao('subirArquivo')){
+    document.getElementById('nav-importar')?.style && (document.getElementById('nav-importar').style.display='none');
+  }
+  // Dashboard
+  if(!temPermissao('acessarDash')){
+    document.getElementById('nav-dash')?.style && (document.getElementById('nav-dash').style.display='none');
+  }
+}
 function showScreen(id,el){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
@@ -1764,6 +1928,7 @@ function showScreen(id,el){
   if(id==='dash')renderDash();
   if(id==='gestor')renderRanking();
   if(id==='agenda')renderAgenda();
+  if(id==='config')renderConfigPermissoes();
 }
 
 // Pedir permissão de notificação ao carregar
