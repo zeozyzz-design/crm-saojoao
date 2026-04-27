@@ -1146,24 +1146,11 @@ function normStr(s){
 }
 function soDigitos(s){ return String(s||'').replace(/\D/g,''); }
 
-// Busca duplicatas por nome similar OU telefone igual
+// Bloqueia cadastro somente se o número de telefone for IDÊNTICO
 function buscarDuplicatas(nome, tel){
-  const nomeN = normStr(nome);
-  const telD  = soDigitos(tel);
-  const base  = clientesVisiveis().length > 0 ? clientesVisiveis() : db.clientes;
-  return base.filter(c=>{
-    // Telefone igual (8+ dígitos)
-    if(telD.length>=8 && soDigitos(c.telefone)===telD) return true;
-    // Nome muito similar: mesmas primeiras 3 palavras
-    const cNome = normStr(c.nome);
-    if(!cNome || !nomeN) return false;
-    const palavrasA = nomeN.split(' ').filter(p=>p.length>2);
-    const palavrasB = cNome.split(' ').filter(p=>p.length>2);
-    if(palavrasA.length===0) return false;
-    const match = palavrasA.filter(p=>palavrasB.includes(p));
-    // Match se ≥2 palavras coincidirem ou nome inteiro ≥8 chars coincidir
-    return match.length>=2 || (palavrasA.length===1 && nomeN.length>=8 && cNome.includes(nomeN));
-  });
+  const telD = soDigitos(tel);
+  if(telD.length < 8) return []; // sem telefone válido, não bloqueia
+  return db.clientes.filter(c => soDigitos(c.telefone) === telD);
 }
 
 let _pendingCadastro = null; // guarda os dados enquanto aguarda confirmação
