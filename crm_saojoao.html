@@ -338,15 +338,20 @@ label:first-child{margin-top:0}
       <div><label>Bairro</label><input id="e-bairro" placeholder="Centro"></div>
     </div>
     <div class="grid2">
-      <div><label>Cidade</label><input id="e-cidade" placeholder="Pouso Alegre"></div>
       <div><label>UF</label>
-        <select id="e-uf"><option value="">Selecione</option>
+        <select id="e-uf" onchange="atualizarCidadesEdit()">
+          <option value="">Selecione o estado</option>
           <option>AC</option><option>AL</option><option>AM</option><option>AP</option><option>BA</option>
           <option>CE</option><option>DF</option><option>ES</option><option>GO</option><option>MA</option>
           <option>MG</option><option>MS</option><option>MT</option><option>PA</option><option>PB</option>
           <option>PE</option><option>PI</option><option>PR</option><option>RJ</option><option>RN</option>
           <option>RO</option><option>RR</option><option>RS</option><option>SC</option><option>SE</option>
           <option>SP</option><option>TO</option>
+        </select>
+      </div>
+      <div><label>Cidade</label>
+        <select id="e-cidade" disabled style="opacity:.5">
+          <option value="">Selecione a UF primeiro</option>
         </select>
       </div>
     </div>
@@ -360,6 +365,20 @@ label:first-child{margin-top:0}
         <button class="btn btn-sm" onclick="closeModal('modal-edit')">Cancelar</button>
         <button class="btn btn-primary btn-sm" onclick="salvarEdicao()">Salvar</button>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal duplicata detectada -->
+<div id="modal-dup" class="modal-overlay" style="display:none">
+  <div class="modal" style="width:460px">
+    <div class="modal-title" style="color:var(--amber)">⚠ Cliente já existe</div>
+    <p style="font-size:13px;color:var(--text2);margin:12px 0 6px">Encontramos um cliente parecido na base:</p>
+    <div id="dup-lista" style="max-height:200px;overflow-y:auto;margin-bottom:16px"></div>
+    <p style="font-size:12px;color:var(--text3);margin-bottom:16px;font-family:'JetBrains Mono',monospace">Deseja cadastrar mesmo assim ou cancelar?</p>
+    <div style="display:flex;justify-content:flex-end;gap:8px">
+      <button class="btn btn-sm" onclick="closeModal('modal-dup')">Cancelar</button>
+      <button class="btn btn-sm" style="background:var(--amber-dim);color:var(--amber);border:none" onclick="confirmarCadastroForcado()">Cadastrar mesmo assim</button>
     </div>
   </div>
 </div>
@@ -615,15 +634,20 @@ label:first-child{margin-top:0}
             <div><label>Bairro</label><input id="c-bairro" placeholder="Centro"></div>
           </div>
           <div class="grid2">
-            <div><label>Cidade</label><input id="c-cidade" placeholder="Pouso Alegre"></div>
             <div><label>UF</label>
-              <select id="c-uf"><option value="">Selecione</option>
+              <select id="c-uf" onchange="atualizarCidadesCad()">
+                <option value="">Selecione o estado</option>
                 <option>AC</option><option>AL</option><option>AM</option><option>AP</option><option>BA</option>
                 <option>CE</option><option>DF</option><option>ES</option><option>GO</option><option>MA</option>
                 <option>MG</option><option>MS</option><option>MT</option><option>PA</option><option>PB</option>
                 <option>PE</option><option>PI</option><option>PR</option><option>RJ</option><option>RN</option>
                 <option>RO</option><option>RR</option><option>RS</option><option>SC</option><option>SE</option>
                 <option>SP</option><option>TO</option>
+              </select>
+            </div>
+            <div><label>Cidade</label>
+              <select id="c-cidade" disabled style="opacity:.5">
+                <option value="">Selecione a UF primeiro</option>
               </select>
             </div>
           </div>
@@ -687,6 +711,7 @@ function gerarId(prefix=''){
 
 // ── AUTENTICAÇÃO ─────────────────────────────────────────────────────────────
 const VENDEDORES=['Ana','Cris','Eder','Mara','Marilia','Pamela','Rafaela','Matheus','Gerencial'];
+const CIDADES_BR={"AC":["ACRELÂNDIA","ASSIS BRASIL","BRASILÉIA","BUJARI","CAPIXABA","CRUZEIRO DO SUL","EPITACIOLÂNDIA","FEIJÓ","JORDÃO","MÂNCIO LIMA","MANOEL URBANO","MARECHAL THAUMATURGO","PLÁCIDO DE CASTRO","PORTO ACRE","PORTO WALTER","RIO BRANCO","RODRIGUES ALVES","SANTA ROSA DO PURUS","SENA MADUREIRA","SENADOR GUIOMARD","TARAUACÁ","XAPURI"],"AL":["ÁGUA BRANCA","ANADIA","ARAPIRACA","ATALAIA","BATALHA","BELÉM","BOM CONSELHO","BOM SUCESSO","BOQUEIRÃO","BRANQUINHA","CACIMBINHAS","CAJUEIRO","CAMPESTRE","CAMPO ALEGRE","CAMPO GRANDE","CANAPI","CAPELA","CARNEIROS","CHÃ PRETA","COITÉ DO NÓIA","COLÔNIA LEOPOLDINA","COQUEIRO SECO","CORURIPE","CRAÍBAS","DELMIRO GOUVEIA","DOIS RIACHOS","ESTRELA DE ALAGOAS","FEIRA GRANDE","FELIZ DESERTO","FLEXEIRAS","GIRAU DO PONCIANO","IBATEGUARA","IGACI","Igreja NOVA","INHAPI","JACARÉ DOS HOMENS","JACUÍPE","JAPARATINGA","JARAMATAIA","JEQUIÁ DA PRAIA","JOAQUIM GOMES","JUNDIÁ","JUNQUEIRO","LAGOA DA CANOA","LIMOEIRO DE ANADIA","MACEIÓ","MAJOR ISIDORO","MAR VERMELHO","MARAGOGI","MARAVILHA","MARECHAL DEODORO","MARIBONDO","MATA GRANDE","MATRIZ DE CAMARAGIBE","MESSIAS","MINADOR DO NEGRÃO","MONTEIRÓPOLIS","MURICI","NOVO LINO","OLHO D`ÁGUA DAS FLORES","OLHO D`ÁGUA DO CASADO","OLHO D`ÁGUA GRANDE","OLIVENÇA","OURO BRANCO","PALESTINA","PALMEIRA DOS ÍNDIOS","PÃO DE AÇÚCAR","PARICONHA","PARIPUEIRA","PASSO DE CAMARAGIBE","PAULO JACINTO","PENEDO","PIAÇABUÇU","PILAR","PINDOBA","PIRANHAS","POÇO DAS TRINCHEIRAS","PORTO CALVO","PORTO DE PEDRAS","PORTO REAL DO COLÉGIO","QUEBRANGULO","RIO LARGO","ROTEIRO","SANTA LUZIA DO NORTE","SANTANA DO IPANEMA","SANTANA DO MUNDAÚ","SÃO BRÁS","SÃO JOSÉ DA LAJE","SÃO JOSÉ DA TAPERA","SÃO LUÍS DO QUITUNDE","SÃO MIGUEL DOS CAMPOS","SÃO MIGUEL DOS MILAGRES","SÃO SEBASTIÃO","SATUBA","SENADOR RUI PALMEIRA","TANQUE D`ARCA","TAQUARANA","TEOTÔNIO VILELA","TRAIPU","UNIÃO DOS PALMARES","VIÇOSA"],"AM":["MANAUS","PARINTINS","ITACOATIARA","MANACAPURU","COARI","TEFÉ","TABATINGA","MAUÉS","HUMAITÁ","SANTA ISABEL DO RIO NEGRO","BARCELOS","MANICORÉ","BORBA","NOVA OLINDA DO NORTE","URUCURITUBA","CAREIRO","URUCARÁ","IRANDUBA","LÁBREA","SÃO GABRIEL DA CACHOEIRA"],"AP":["MACAPÁ","SANTANA","OIAPOQUE","LARANJAL DO JARI","MAZAGÃO","PORTO GRANDE","FERREIRA GOMES","AMAPÁ","TARTARUGALZINHO","VITÓRIA DO JARI"],"BA":["SALVADOR","FEIRA DE SANTANA","VITÓRIA DA CONQUISTA","CAMAÇARI","JUAZEIRO","ILHÉUS","LAURO DE FREITAS","BARREIRAS","JEQUIÉ","TEIXEIRA DE FREITAS","ALAGOINHAS","PORTO SEGURO","SIMÕES FILHO","PAULO AFONSO","EUNÁPOLIS","SANTO ANTÔNIO DE JESUS","CANDEIAS","GUANAMBI","ITABUNA","JACOBINA","SERRINHA","VALENÇA","LUÍS EDUARDO MAGALHÃES"],"CE":["FORTALEZA","CAUCAIA","JUAZEIRO DO NORTE","MARACANAÚ","SOBRAL","CRATO","ITAPIPOCA","MARANGUAPE","IGUATU","QUIXADÁ","CANINDÉ","AQUIRAZ","PACATUBA","CRATEÚS","TIANGUÁ","CASCAVEL","RUSSAS","HORIZONTE","CAMOCIM","ARACATI"],"DF":["BRASÍLIA","CEILÂNDIA","TAGUATINGA","SAMAMBAIA","SOBRADINHO","PLANALTINA","GAMA","ÁGUAS CLARAS","RECANTO DAS EMAS","SANTA MARIA","SÃO SEBASTIÃO","GUARÁ","NÚCLEO BANDEIRANTE","LAGO NORTE","LAGO SUL","VICENTE PIRES","PARANOÁ","RIACHO FUNDO"],"ES":["VITÓRIA","SERRA","VILA VELHA","CARIACICA","CACHOEIRO DE ITAPEMIRIM","LINHARES","COLATINA","GUARAPARI","SÃO MATEUS","ARACRUZ","VIANA","NOVA VENÉCIA","BARRA DE SÃO FRANCISCO","JOÃO NEIVA","AFONSO CLÁUDIO","ITAPEMIRIM","MARATAÍZES","PIÚMA","ICONHA","ANCHIETA"],"GO":["GOIÂNIA","APARECIDA DE GOIÂNIA","ANÁPOLIS","RIO VERDE","LUZIÂNIA","ÁGUAS LINDAS DE GOIÁS","VALPARAÍSO DE GOIÁS","TRINDADE","FORMOSA","NOVO GAMA","ITUMBIARA","SENADOR CANEDO","CATALÃO","JATAÍ","PLANALTINA","CALDAS NOVAS","GOIANÉSIA","MINEIROS","QUIRINÓPOLIS","CERES"],"MA":["SÃO LUÍS","IMPERATRIZ","TIMON","CAXIAS","CODÓ","PAÇO DO LUMIAR","AÇAILÂNDIA","BACABAL","BALSAS","SANTA INÊS","PINHEIRO","CHAPADINHA","SÃO JOSÉ DE RIBAMAR","COROATÁ","VIANA","PEDREIRAS","PRESIDENTE DUTRA","GRAJAÚ","BARRA DO CORDA","ITAPECURU MIRIM"],"MG":["ALBERTINA","ALFENAS","ALMENARA","ALPINOPOLIS","ALTEROSA","ANDRADAS","ARAGUARI","ARAXÁ","ARCEBURGO","AREADO","BANDEIRA DO SUL","BARBACENA","BELO HORIZONTE","BETIM","BOA ESPERANCA","BOCAINA DE MINAS","BOM JESUS DA PENHA","BOM REPOLSO","BORDA DA MATA","BOTELHOS","BRAZOPOLIS","BUENO BRANDAO","BUENO BRANDÃO","CABO VERDE","CALDAS","CAMANDUCAIA","CAMBUÍ","CAMPESTRE","CAMPO BELO","CAMPOS GERAIS","CAPITOLIO","CARATINGA","CARMO DA CACHOEIRA","CATAGUASES","CAXAMBU","CONCEIÇÃO DOS OUROS","CONGONHAL","CONSELHEIRO LAFAIETE","CONTAGEM","CORONEL FABRICIANO","CRISTINA","CURVELO","DELFIM MOREIRA","DIVINÓPOLIS","DIVISA NOVA","ELOI MENDES","EXTREMA","FORMIGA","FRUTAL","GONÇALVES","GOVERNADOR VALADARES","GUARANESIA","GUAXUPE","GUAXUPÉ","HELIODORA","IBIRITÉ","IBITIARA DE MINAS","IBITIURA DE MINAS","IBITURA DE MINAS","INCONFIDENTES","IPATINGA","IPUIUNA","IPUIÚNA","ITABIRA","ITAJUBA","ITAJUBÁ","ITAMONTE","ITAPEVA","ITAÚNA","ITUIUTABA","JACUTINGA","JACUÍ","JUIZ DE FORA","JURUAIA","LAMBARI","LAVRAS","MACHADO","MARIA DA FÉ","MONTE BELO","MONTE SANTO DE MINAS","MONTE SIAO","MONTES CLAROS","MUNHOZ","MURIAÉ","MUZAMBINHO","NATÉRCIA","NOVA LIMA","NOVA RESENDE","OURO FINO","OURO PRETO","PARAGUAÇU","PARAISOPOLIS","PARÁ DE MINAS","PASSA QUATRO","PASSOS","PATOS DE MINAS","PEDRALVA","PIRANGUINHO","POAOS DE CALDAS","POCO FUNDO","POCOS DE CALDAS","POUSO ALEGRE","POÇOS DE CALDAS","PO�O FUNDO","PO�OS CALDAS","PO�OS DE CALDAS","RIBEIRÃO DAS NEVES","SABARÁ","SANTA LUZIA","SANTA RITA DE CALDAS","SANTA RITA DO SAPUCAI","SANTA RITA DO SAPUCAÍ","SAO GONCALO DO SAPUCAI","SAO JOSE DO ALEGRE","SAO PEDRO DA UNIAO","SAO PEDRO DE CALDAS","SAO SEBASTIAO DA BELA VISTA","SAO SEBASTIAO DO PARAISO","SENADOR JOSÉ BENTO","SERRANIA","SETE LAGOAS","SILVIANOPOLIS","SOLEDADE DE MINAS","STA RIA SAPUCAI","SÃO GONÇALO DO SAPUCAÍ","SÃO JOÃO DEL REI","SÃO LOURENÇO","SÃO SEBASTIÃO DO PARAÍSO","S�O SEBASTI�O DA BELA VISTA","TEÓFILO OTONI","TIMÓTEO","TRES CORACOES","TRES PONTAS","TRÊS CORAÇÕES","TRÊS PONTAS","UBERABA","UBERLÂNDIA","UBÁ","VARGINHA","VESPASIANO","VIÇOSA","WENCESLAU BRAZ"],"MS":["CAMPO GRANDE","DOURADOS","TRÊS LAGOAS","CORUMBÁ","PONTA PORÃ","NAVIRAÍ","NOVA ANDRADINA","AQUIDAUANA","SIDROLÂNDIA","PARANAÍBA","COXIM","MARACAJU","SÃO GABRIEL DO OESTE","AMAMBAI","RIO BRILHANTE","COSTA RICA","JARDIM","ANASTÁCIO","BONITO","MIRANDA"],"MT":["CUIABÁ","VÁRZEA GRANDE","RONDONÓPOLIS","SINOP","TANGARÁ DA SERRA","CÁCERES","SORRISO","LUCAS DO RIO VERDE","PRIMAVERA DO LESTE","BARRA DO GARÇAS","ALTA FLORESTA","GUARANTÃ DO NORTE","NOVA MUTUM","COLÍDER","JUÍNA","DIAMANTINO","PONTES E LACERDA","PEIXOTO DE AZEVEDO","CONFRESA","MATUPÁ"],"PA":["BELÉM","ANANINDEUA","SANTARÉM","MARABÁ","CASTANHAL","PARAUAPEBAS","ABAETETUBA","CAMETÁ","BRAGANÇA","ALTAMIRA","TUCURUÍ","BARCARENA","PARAGOMINAS","MARITUBA","REDENÇÃO","ITAITUBA","TOMÉ-AÇU","MOJU","CAPANEMA","BREVES"],"PB":["JOÃO PESSOA","CAMPINA GRANDE","SANTA RITA","PATOS","BAYEUX","SOUSA","CAJAZEIRAS","CABEDELO","GUARABIRA","SAPÉ","MAMANGUAPE","QUEIMADAS","ESPERANÇA","MONTEIRO","CATOLÉ DO ROCHA","POMBAL","ITABAIANA","ALAGOINHA","LAGOA SECA","INGÁ"],"PE":["RECIFE","CARUARU","OLINDA","JABOATÃO DOS GUARARAPES","PETROLINA","PAULISTA","GARANHUNS","CAMAÇARI","VITÓRIA DE SANTO ANTÃO","CABO DE SANTO AGOSTINHO","SANTA CRUZ DO CAPIBARIBE","IPOJUCA","ARARIPINA","BELO JARDIM","SURUBIM","SALGUEIRO","CAMARAGIBE","GOIANA","ARCOVERDE","SÃO LOURENÇO DA MATA"],"PI":["TERESINA","PARNAÍBA","PICOS","PIRIPIRI","FLORIANO","CAMPO MAIOR","BARRAS","CAXINGÓ","ESPERANTINA","SÃO RAIMUNDO NONATO","URUÇUÍ","OEIRAS","VALENÇA DO PIAUÍ","BATALHA","PEDRO II","CORRENTE","LUÍS CORREIA","BRASILEIRA","BOM JESUS","FRONTEIRAS"],"PR":["ALMIRANTE TAMANDARÉ","APUCARANA","ARAPONGAS","ARAUCÁRIA","CAMBÉ","CAMPO LARGO","CAMPO MOURÃO","CASCAVEL","CIANORTE","COLOMBO","CURITIBA","FAZENDA RIO GRANDE","FOZ DO IGUAÇU","FRANCISCO BELTRÃO","GUARAPUAVA","LONDRINA","MARECHAL CÂNDIDO RONDON","MARINGÁ","PALMAS","PARANAGUÁ","PARANAVAÍ","PATO BRANCO","PINHAIS","PIRAQUARA","PONTA GROSSA","SARANDI","SERTANOPOLIS","SÃO JOSÉ DOS PINHAIS","TELÊMACO BORBA","TOLEDO","UMUARAMA"],"RJ":["RIO DE JANEIRO","SÃO GONÇALO","DUQUE DE CAXIAS","NOVA IGUAÇU","NITERÓI","BELFORD ROXO","CAMPOS DOS GOYTACAZES","SÃO JOÃO DE MERITI","PETRÓPOLIS","VOLTA REDONDA","MACAÉ","ITABORAÍ","MAGÉ","NOVA FRIBURGO","BARRA MANSA","ANGRA DOS REIS","QUEIMADOS","NILÓPOLIS","RESENDE","TERESÓPOLIS","CABO FRIO","MESQUITA","MARICÁ","ITAGUAÍ","ARARUAMA"],"RN":["NATAL","MOSSORÓ","PARNAMIRIM","SÃO GONÇALO DO AMARANTE","MACAÍBA","CEARÁ-MIRIM","CAICÓ","ASSU","CURRAIS NOVOS","SANTA CRUZ","NOVA CRUZ","SÃO JOSÉ DE MIPIBU","EXTREMOZ","ANGICOS","APODI","PAU DOS FERROS","TOUROS","AREIA BRANCA","CANGUARETAMA","GUAMARÉ"],"RO":["PORTO VELHO","JI-PARANÁ","ARIQUEMES","VILHENA","CACOAL","ROLIM DE MOURA","JARU","GUAJARÁ-MIRIM","OURO PRETO DO OESTE","ESPIGÃO D`OESTE","PIMENTA BUENO","PRESIDENTE MÉDICI","COLORADO DO OESTE","BURITIS","NOVA MAMORÉ","CEREJEIRAS","ALTA FLORESTA D`OESTE","ALVORADA D`OESTE","MACHADINHO D`OESTE","SÃO FRANCISCO DO GUAPORÉ"],"RR":["BOA VISTA","RORAINÓPOLIS","CARACARAÍ","ALTO ALEGRE","MUCAJAÍ","CANTÁ","IRACEMA","CAROEBE","SÃO JOÃO DA BALIZA","SÃO LUIZ","AMAJARI","BONFIM","NORMANDIA","PACARAIMA","UIRAMUTÃ","VILA DO BONFIM"],"RS":["ALEGRETE","ALVORADA","BAGÉ","BENTO GONÇALVES","CACHOEIRA DO SUL","CACHOEIRINHA","CANOAS","CAXIAS DO SUL","CHARQUEADAS","ERECHIM","FARROUPILHA","FREDERICO WESTPHALEN","GRAVATAÍ","GUAÍBA","IJUÍ","LAJEADO","NOVO HAMBURGO","PASSO FUNDO","PELOTAS","PORTO ALEGRE","RIO GRANDE","SANTA CRUZ DO SUL","SANTA MARIA","SANTA ROSA","SAPIRANGA","SAPUCAIA DO SUL","SÃO LEOPOLDO","URUGUAIANA","VACARIA","VIAMÃO"],"SC":["BALNEÁRIO CAMBORIÚ","BLUMENAU","BRUSQUE","CAMBORIÚ","CANOINHAS","CAÇADOR","CHAPECÓ","CONCÓRDIA","CRICIÚMA","FLORIANÓPOLIS","GASPAR","INDAIAL","ITAJAÍ","IÇARA","JARAGUÁ DO SUL","JOINVILLE","LAGES","MAFRA","NAVEGANTES","PALHOÇA","RIO DO SUL","SALETE","SÃO BENTO DO SUL","SÃO JOSÉ","TUBARÃO","VIDEIRA"],"SE":["ARACAJU","NOSSA SENHORA DO SOCORRO","LAGARTO","ITABAIANA","CARUARU","SÃO CRISTÓVÃO","ESTÂNCIA","TOBIAS BARRETO","SIMÃO DIAS","PROPRIÁ","ITAPORANGA D`AJUDA","BARRA DOS COQUEIROS","ITABAIANINHA","POÇO REDONDO","MOITA BONITA","AQUIDABÃ","RIBEIRÓPOLIS","CARIRA","NOSSA SENHORA DA GLÓRIA","MARUIM"],"SP":["AGUA VERMELHA","AGUAI","AGUAS DA PRATA","AGUAS DE LINDOIA","AGUA�","AGUDOS","ALBERTINA","ALPIN�POLIS","ALUMINIO","AMERICANA","AMERICO BRASILIENSE","AMPARO","AMÉRICO BRASILIENSE","ANALANDIA","ANDRADAS","ANDRADINA","ARACOIABA DA SERRA","ARARAQUARA","ARARAS","ARAÇATUBA","ARCEBURGO","ARTUR NOGUEIRA","ASSIS","ATIBAIA","AVANHANDAVA","AVAÍ","BARIRI","BARRETOS","BARUERI","BAURU","BEBEDOURO","BIRIGUI","BOCAINA","BOFETE","BOITUVA","BOM JESUS DOS PERDOES","BORDA DA MATA","BOTELHOS","BOTUCATU","BRAGANAA PAULISTA","BRAGANCA PAULISTA","BRAGANÇA PAULISTA","BURITAMA","CABO VERDE","CABREUVA","CABRÁLIA PAULISTA","CACONDE","CAMPINAS","CAMPO LIMPO PAULISTA","CAPELA DO ALTO","CAPIVARI","CARAPICUIBA","CARAPICUÍBA","CASA BRANCA","CATANDUVA","CERQUILHO","CESARIO LANGE","COLOMBIA","CONCHAL","CORDEIROPOLIS","CORUMBATAI","COSMOPOLIS","COSMÓPOLIS","COTIA","CRIS�LIA","DESCALVADO","DIADEMA","DIVINOLANDIA","DIVINOL�NDIA","DUARTINA","E.S. DO PINHAL","ELIAS FAUSTO","ELIAS GAUSTO","EMBU DAS ARTES","ENGENHEIRO COELHO","ESPIRITO SANTO DO PINHAL","ESTIVA GERBI","EXTREMA","FERNÃO","FERRAZ DE VASCONCELOS","FRANCA","FRANCO DA ROCHA","GABRIEL MONTEIRO","GARÇA","GETULINA","GUAIMBÊ","GUAIÇARA","GUARUJÁ","GUARULHOS","HOLAMBRA","HORTOLANDIA","HORTOLÂNDIA","IARAS","IBATE","IBATÉ","IBAT�","IBITIURA DE MINAS","IBIUNA","IBI�NA","INCONFIDENTES","INDAIATUBA","IPERO","IPEUNA","IRACEMAPOLIS","ITAJU","ITAPETININGA","ITAPEVA","ITAPEVI","ITAPIRA","ITAQUAQUECETUBA","ITATIBA","ITATINGA","ITIRAPINA","ITOBI","ITU","ITUPEVA","ITUVERAVA","ITÁPOLIS","JABOTICABAL","JACARE (CABREUVA)","JACAREÍ","JACUTINGA","JAGUARIUNA","JAGUARIÚNA","JAGUARI�NA","JARDIM","JAÚ","JUNDIAI","JUNDIAÍ","LARANJAL PAULISTA","LAVÍNIA","LEME","LENÇÓIS PAULISTA","LIEMIRA","LIMEIRA","LINDOIA","LINS","LOUVEIRA","LUIZIÂNIA","MACATUBA","MAIRINQUE","MAIRIPORA","MARÍLIA","MATAO","MAT�O","MAUÁ","MIRANDÓPOLIS","MOCOCA","MOGI DAS CRUZES","MOGI GUAAU","MOGI GUACU","MOGI GUAÇU","MOGI GUA�U","MOGI MIRIM","MOGI-MIRIM","MOJI MIRIM","MONTE ALEGRE DO SUL","MONTE MOR","MORUNGABA","NAZARÉ PAULISTA","NOVA LUZITÂNIA","NOVA ODESSA","OLIMPIA","OSASCO","OSVALDO CRUZ","OURINHOS","OURO FINO","PAULINIA","PAULNIA","PAULÍNIA","PEDERNEIRAS","PEDRA BELA","PEDREIRA","PENÁPOLIS","PEREIRAS","PIEDADE","PINHAL","PINHALZINHO","PIRACAIA","PIRACICABA","PIRAJU","PIRAJUÍ","PIRASSUNUNGA","PIRATININGA","POAOS DE CALDAS","PORTO FELIZ","PORTO FERREIRA","PORTOFERREIRA","PRAIA GRANDE","PRATÂNIA","PRESIDENTE ALVES","PRESIDENTE EPITÁCIO","PRESIDENTE PRUDENTE","PROMISSÃO","REGINÓPOLIS","RIBEIRAO PRETO","RIBEIRÃO BONITO","RIBEIRÃO PIRES","RIBEIRÃO PRETO","RIO CLARO","RIO DAS PEDRAS","RIO GRANDE DA SERRA","SA0 JOAO DA BOA VISTA","SALTO","SALTO DE PIRAPORA","SANTA BARABARA DO OESTE","SANTA BARBARA DAOESTE","SANTA BARBARA DOESTE","SANTA BARBARA D\\'OESTE","SANTA BÁRBARA D`OESTE","SANTA CEUZ DAS PALMEIRAS","SANTA CRUZ DA CONCEICAO","SANTA CRUZ DAS PALMEIRAS","SANTA GERTRUDES","SANTA RITA DO PASSA QUATRO","SANTA ROSA DE VITERBO","SANTANA DE PARNAIBA","SANTO ANDRÉ","SANTO ANTONIO DE POSSE","SANTO ANTONIO DO JARDIM","SANTOS","SAO CAETANO DO SUL","SAO CARLOS","SAO JOAO DA BOA VISATA","SAO JOAO DA BOA VISTA","SAO JOAO DA BOA VITSA","SAO JOAOA DA BOA VISTA","SAO JOSA DO RIO PARDO","SAO JOSE DA BELA VISTA","SAO JOSE DO RIO PARDO","SAO JOSE DOS CAMPOS","SAO PAULO","SAO PEDRO","SAO ROQUE","SAO SEBASTIAO DA GRAMA","SAO SIMAO","SERRA NEGRA","SERTÃOZINHO","SOCORRO","SOROCABA","STO A. DE POSSE","SUMARE","SUMARÉ","SUZANO","SÃO BERNARDO DO CAMPO","SÃO CAETANO DO SUL","SÃO CARLOS","SÃO JOSÉ DO RIO PRETO","SÃO JOSÉ DOS CAMPOS","SÃO JOÃO DA BOA VISTA","SÃO MANUEL","SÃO PAULO","SÃO ROQUE","SÃO VICENTE","São CARLOS","S�O CARLOS","S�O JOSE DO RIO PARDO","S�O JOSE RIO PARDO","S�O JO�O DA BOA VISTA","S�O PAULO","S�O PEDRO","S�O SEBASTI�O DA GRAMA","TABOÃO DA SERRA","TAMBAU","TAPIRATIBA","TATUI","TAUBATE","TAUBATÉ","TIETE","TIETÊ","TRÊS LAGOAS","TUPA","TUPÃ","VALINHOS","VALPARAÍSO","VARGEM","VARGEM GRANDE DO SUL","VARGEM GRANDE PAULISTA","VARZEA PAULISTA","VINHEDO","VOLTA REDONDA","VOTORANTIM","VOTUPORANGA","ZACARIAS"],"TO":["ALVORADA","ARAGUATINS","ARAGUAÍNA","ARRAIAS","COLINAS DO TOCANTINS","CONCEIÇÃO DO TOCANTINS","CRISTALÂNDIA","DIANÓPOLIS","FORMOSO DO ARAGUAIA","GUARAÍ","GURUPI","LAGOA DA CONFUSÃO","MIRACEMA DO TOCANTINS","NATIVIDADE","NOVO ACORDO","PALMAS","PARAÍSO DO TOCANTINS","PEDRO AFONSO","PORTO NACIONAL","TOCANTINÓPOLIS"]};
 const GERENTES=['Marcelo','Matheus','Gerencial'];
 let usuarioAtual=null;
 
@@ -816,6 +841,12 @@ async function syncAll(){
       api({action:'getMeta'}),
       api({action:'getAgendamentos'})
     ]);
+    // Fecha qualquer modal aberto antes de reindexar (evita _idx inválido)
+    ['modal-cli','modal-edit','modal-lig','modal-agenda','modal-del'].forEach(id=>{
+      const el=document.getElementById(id);
+      if(el&&el.style.display!=='none')el.style.display='none';
+    });
+    modalCliId=null; editCliId=null; agCliId=null;
     db.clientes=clis.map((c,i)=>({...c,id:normalizeId(c.id),_idx:i}));
     db.ligacoes=ligs.map(l=>({...l,cid:normalizeId(l.clienteId||l.cid),atendeu:l.atendeu==='TRUE'||l.atendeu===true,data:normalizarData(l.data)}));
     db.meta=metaR.meta||50;
@@ -925,6 +956,33 @@ function parseAgData(rawData, rawHora){
   return {ano:'', mes:'', dia:'', horaStr, isoStr:''};
 }
 
+// ── CIDADES POR UF ────────────────────────────────────────────────────
+function popularCidades(ufId, cidadeId, valorAtual=''){
+  const uf = document.getElementById(ufId)?.value||'';
+  const sel = document.getElementById(cidadeId);
+  if(!sel) return;
+  if(!uf){
+    sel.innerHTML='<option value="">Selecione a UF primeiro</option>';
+    sel.disabled=true; sel.style.opacity='.5'; return;
+  }
+  const cids = (CIDADES_BR[uf]||[]).slice().sort();
+  sel.innerHTML='<option value="">Selecione a cidade</option>'
+    + cids.map(c=>`<option value="${c}" ${c===valorAtual?'selected':''}>${c}</option>`).join('');
+  // Se cidade atual não está na lista, permite digitar manualmente como fallback
+  if(valorAtual && !cids.includes(valorAtual)){
+    sel.innerHTML += `<option value="${valorAtual}" selected>${valorAtual} (outro)</option>`;
+  }
+  sel.disabled=false; sel.style.opacity='1';
+}
+
+function atualizarCidadesCad(){
+  popularCidades('c-uf','c-cidade');
+}
+function atualizarCidadesEdit(){
+  const cidadeAtual = document.getElementById('e-cidade')?.value||'';
+  popularCidades('e-uf','e-cidade', cidadeAtual);
+}
+
 function iniciais(n){return n.split(' ').slice(0,2).map(p=>p[0]).join('').toUpperCase();}
 function getVendedores(){return VENDEDORES.filter(v=>v!=='Gerencial');}
 function isGerente(){return usuarioAtual&&(GERENTES.includes(usuarioAtual));}
@@ -935,7 +993,9 @@ const PODE_VER_TODOS=['Marcelo','Matheus','Gerencial'];
 function clientesVisiveis(){
   // Gerentes e Matheus veem toda a base
   if(PODE_VER_TODOS.includes(usuarioAtual)) return db.clientes;
-  return db.clientes.filter(c=>c.vendedor===usuarioAtual);
+  // Case-insensitive: 'ANA' === 'Ana' → match
+  const u = (usuarioAtual||'').toLowerCase();
+  return db.clientes.filter(c=>(c.vendedor||'').toLowerCase()===u);
 }
 
 function statusUltimo(cid){
@@ -1079,26 +1139,96 @@ function renderClientes(){
 }
 
 // ── CADASTRAR ─────────────────────────────────────────────────────────────────
+// Normaliza string para comparação: remove acentos, maiúscula, sem espaços extras
+function normStr(s){
+  if(!s)return'';
+  return String(s).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase().replace(/\s+/g,' ').trim();
+}
+function soDigitos(s){ return String(s||'').replace(/\D/g,''); }
+
+// Busca duplicatas por nome similar OU telefone igual
+function buscarDuplicatas(nome, tel){
+  const nomeN = normStr(nome);
+  const telD  = soDigitos(tel);
+  const base  = clientesVisiveis().length > 0 ? clientesVisiveis() : db.clientes;
+  return base.filter(c=>{
+    // Telefone igual (8+ dígitos)
+    if(telD.length>=8 && soDigitos(c.telefone)===telD) return true;
+    // Nome muito similar: mesmas primeiras 3 palavras
+    const cNome = normStr(c.nome);
+    if(!cNome || !nomeN) return false;
+    const palavrasA = nomeN.split(' ').filter(p=>p.length>2);
+    const palavrasB = cNome.split(' ').filter(p=>p.length>2);
+    if(palavrasA.length===0) return false;
+    const match = palavrasA.filter(p=>palavrasB.includes(p));
+    // Match se ≥2 palavras coincidirem ou nome inteiro ≥8 chars coincidir
+    return match.length>=2 || (palavrasA.length===1 && nomeN.length>=8 && cNome.includes(nomeN));
+  });
+}
+
+let _pendingCadastro = null; // guarda os dados enquanto aguarda confirmação
+
 function cadastrarCli(){
   const nome=document.getElementById('c-nome').value.trim();
   if(!nome){toast('Informe o nome.','err');return;}
+  const tel=document.getElementById('c-tel').value.trim();
+
   const cli={
     id:gerarId('cli_'),
     nome,
-    telefone:document.getElementById('c-tel').value.trim(),
+    telefone:tel,
     endereco:document.getElementById('c-endereco').value.trim(),
     bairro:document.getElementById('c-bairro').value.trim(),
-    cidade:document.getElementById('c-cidade').value.trim(),
+    cidade:document.getElementById('c-cidade').value,
     uf:document.getElementById('c-uf').value,
     vendedor:document.getElementById('c-vend').value,
     obs:document.getElementById('c-obs').value.trim(),
     dataCadastro:hoje()
   };
+
+  // Verificar duplicatas antes de cadastrar
+  const dups = buscarDuplicatas(nome, tel);
+  if(dups.length > 0){
+    _pendingCadastro = cli;
+    // Montar lista de similares
+    document.getElementById('dup-lista').innerHTML = dups.slice(0,5).map(d=>{
+      const s=statusUltimo(normalizeId(d.id));
+      const ul=ultimaLig(normalizeId(d.id));
+      return `<div style="padding:10px 12px;background:var(--black3);border-radius:var(--radius);margin-bottom:8px;border-left:3px solid var(--amber)">
+        <div style="font-size:13px;font-weight:600;color:var(--text)">${d.nome}</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:3px;font-family:'JetBrains Mono',monospace">
+          📞 ${d.telefone||'—'} · ${[d.cidade,d.uf].filter(Boolean).join('/')||'—'} · ${d.vendedor||'—'}
+        </div>
+        <div style="margin-top:4px">${badgeStatus(s)}${ul?`<span style="font-size:10px;color:var(--text3);margin-left:8px">último contato: ${ul.data}</span>`:''}</div>
+      </div>`;
+    }).join('');
+    document.getElementById('modal-dup').style.display='flex';
+    return;
+  }
+
+  _executarCadastro(cli);
+}
+
+function confirmarCadastroForcado(){
+  closeModal('modal-dup');
+  if(_pendingCadastro){
+    _executarCadastro(_pendingCadastro);
+    _pendingCadastro=null;
+  }
+}
+
+function _executarCadastro(cli){
+  cli._idx = db.clientes.length;
   db.clientes.push(cli);
-  api({action:'addCliente',cliente:{...cli,tel:cli.telefone}}).then(()=>toast('Cliente salvo!','ok')).catch(()=>toast('Erro ao salvar','err'));
+  api({action:'addCliente',cliente:{...cli,tel:cli.telefone}})
+    .then(()=>toast('Cliente salvo no Sheets!','ok'))
+    .catch(()=>toast('Erro ao salvar','err'));
   document.getElementById('cad-ok').style.display='block';
   setTimeout(()=>document.getElementById('cad-ok').style.display='none',2500);
-  ['c-nome','c-tel','c-endereco','c-bairro','c-cidade','c-obs'].forEach(id=>document.getElementById(id).value='');
+  ['c-nome','c-tel','c-endereco','c-bairro','c-obs'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('c-cidade').innerHTML='<option value="">Selecione a UF primeiro</option>';
+  document.getElementById('c-cidade').disabled=true;
+  document.getElementById('c-cidade').style.opacity='.5';
   document.getElementById('c-uf').value='';document.getElementById('c-vend').value='';
   poblarSelects();renderMsItems();renderClientes();
 }
@@ -1119,8 +1249,9 @@ function abrirEdicao(ref){
   document.getElementById('e-tel').value=cli.telefone||'';
   document.getElementById('e-endereco').value=cli.endereco||'';
   document.getElementById('e-bairro').value=cli.bairro||'';
-  document.getElementById('e-cidade').value=cli.cidade||'';
   document.getElementById('e-uf').value=cli.uf||'';
+  // Popular cidades do estado antes de definir o valor
+  popularCidades('e-uf','e-cidade', cli.cidade||'');
   document.getElementById('e-vend').value=cli.vendedor||'';
   document.getElementById('e-obs').value=cli.obs||'';
   document.getElementById('modal-edit').style.display='flex';
@@ -1637,7 +1768,7 @@ function renderRanking(){
   const vs=getVendedores();
   if(!vs.length){document.getElementById('ranking').innerHTML='<p class="empty">sem vendedores</p>';return;}
   const rows=vs.map(v=>{
-    const ligsHoje=db.ligacoes.filter(l=>l.vendedor===v&&l.data===hoje());
+    const ligsHoje=db.ligacoes.filter(l=>(l.vendedor||'').toLowerCase()===v.toLowerCase()&&l.data===hoje());
     const total=ligsHoje.length;
     const atendidas=ligsHoje.filter(l=>l.atendeu).length;
     const fechados=ligsHoje.filter(l=>l.resultado==='fechado').length;
