@@ -802,9 +802,9 @@ function entrarNoApp(user){
   document.getElementById('user-avatar').textContent=user[0].toUpperCase();
   document.getElementById('user-pill-name').textContent=user;
   document.getElementById('user-pill-role').textContent=GERENTES.includes(user)?'Gerente':'Vendedor';
-  // Configurações só para Gerencial
+  // Configurações para Gerencial e Matheus
   const navConfig=document.getElementById('nav-config');
-  if(navConfig) navConfig.style.display=user==='Gerencial'?'flex':'none';
+  if(navConfig) navConfig.style.display=(user==='Gerencial'||user==='Matheus')?'flex':'none';
   // Adicionar ids aos nav items para controle de permissões
   document.querySelectorAll('.nav-item').forEach(el=>{
     const onclick=el.getAttribute('onclick')||'';
