@@ -249,7 +249,7 @@ label:first-child{margin-top:0}
       <label style="margin-top:0">Usuário</label>
       <select id="login-user">
         <option value="">Selecione seu nome</option>
-        <option>Ana</option><option>Cris</option><option>Eder</option><option>Mara</option>
+        <option>Ana</option><option>Flavia</option><option>Mara</option>
         <option>Marilia</option><option>Pamela</option><option>Rafaela</option>
         <option>Matheus</option><option>Gerencial</option>
       </select>
@@ -281,7 +281,7 @@ label:first-child{margin-top:0}
       <button class="qbtn" id="canal-visita" onclick="setCanal('visita')">🤝 Visita</button>
     </div>
     <label style="margin-top:0">Vendedor que fez o contato</label>
-    <select id="ml-vendedor"><option value="">Selecione</option><option>Ana</option><option>Cris</option><option>Eder</option><option>Mara</option><option>Marilia</option><option>Pamela</option><option>Rafaela</option><option>Matheus</option></select>
+    <select id="ml-vendedor"><option value="">Selecione</option></select>
     <div style="font-size:11px;color:var(--steel2);text-transform:uppercase;letter-spacing:1px;font-family:'JetBrains Mono',monospace;margin:14px 0 6px">O contato foi atendido?</div>
     <div class="qbtns">
       <button class="qbtn" id="btn-sim" onclick="setAtendeu(true)">✓ Atendeu</button>
@@ -356,7 +356,7 @@ label:first-child{margin-top:0}
       </div>
     </div>
     <label>Vendedor responsável</label>
-    <select id="e-vend"><option value="">Selecione</option><option>Ana</option><option>Cris</option><option>Eder</option><option>Mara</option><option>Marilia</option><option>Pamela</option><option>Rafaela</option><option>Matheus</option></select>
+    <select id="e-vend"><option value="">Selecione</option></select>
     <label>Observação do cadastro</label>
     <textarea id="e-obs" placeholder="Informações importantes sobre este cliente..."></textarea>
     <div style="display:flex;justify-content:space-between;align-items:center;margin-top:20px;flex-wrap:wrap;gap:8px">
@@ -401,7 +401,7 @@ label:first-child{margin-top:0}
     <div class="modal-title">📅 Novo agendamento</div>
     <div class="modal-sub" id="ag-cliente-nome" style="margin-top:4px"></div>
     <label style="margin-top:0">Vendedor</label>
-    <select id="ag-vend"><option value="">Selecione</option><option>Ana</option><option>Cris</option><option>Eder</option><option>Mara</option><option>Marilia</option><option>Pamela</option><option>Rafaela</option><option>Matheus</option></select>
+    <select id="ag-vend"><option value="">Selecione</option></select>
     <div class="grid2">
       <div><label>Data</label><input type="date" id="ag-data"></div>
       <div><label>Hora</label><input type="time" id="ag-hora"></div>
@@ -652,7 +652,7 @@ label:first-child{margin-top:0}
             </div>
           </div>
           <label>Vendedor responsável</label>
-          <select id="c-vend"><option value="">Selecione</option><option>Ana</option><option>Cris</option><option>Eder</option><option>Mara</option><option>Marilia</option><option>Pamela</option><option>Rafaela</option><option>Matheus</option></select>
+          <select id="c-vend"><option value="">Selecione</option></select>
           <label>Observação do cadastro (opcional)</label>
           <textarea id="c-obs" placeholder="Informações importantes sobre este cliente..."></textarea>
           <div style="display:flex;justify-content:flex-end;margin-top:16px">
@@ -663,6 +663,21 @@ label:first-child{margin-top:0}
 
       <!-- CONFIGURAÇÕES (somente Gerencial) -->
       <div id="screen-config" class="screen">
+
+        <div class="card" style="max-width:600px">
+          <div class="card-title">Equipe de vendedores</div>
+          <p style="font-size:12px;color:var(--text3);margin-bottom:16px;font-family:'JetBrains Mono',monospace">Adicionar ou remover um vendedor <strong>cria ou exclui o acesso de login automaticamente</strong>. A senha padrão do novo vendedor é <strong>1234</strong>.</p>
+          <div id="config-vend-lista" style="margin-bottom:16px"></div>
+          <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap">
+            <div style="flex:1;min-width:160px">
+              <label style="margin-top:0">Nome do novo vendedor</label>
+              <input id="config-novo-vend" placeholder="Ex: Juliana" maxlength="30" onkeydown="if(event.key==='Enter')adicionarVendedor()">
+            </div>
+            <button class="btn btn-primary" onclick="adicionarVendedor()">+ Adicionar</button>
+          </div>
+          <div id="config-vend-msg" style="margin-top:10px;font-size:12px;display:none"></div>
+        </div>
+
         <div class="card" style="max-width:600px">
           <div class="card-title">Permissões por usuário</div>
           <p style="font-size:12px;color:var(--text3);margin-bottom:16px;font-family:'JetBrains Mono',monospace">Habilite ou desabilite funções para cada vendedor. As alterações são salvas automaticamente.</p>
@@ -670,22 +685,20 @@ label:first-child{margin-top:0}
             <div class="loading"><div class="spin"></div>Carregando...</div>
           </div>
         </div>
+
         <div class="card" style="max-width:600px">
           <div class="card-title">Gerenciar senhas</div>
           <p style="font-size:12px;color:var(--text3);margin-bottom:16px;font-family:'JetBrains Mono',monospace">Redefina a senha de qualquer usuário para o padrão <strong>1234</strong> (forçará troca no próximo acesso).</p>
           <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap">
             <div style="flex:1;min-width:160px">
               <label style="margin-top:0">Usuário</label>
-              <select id="config-reset-user">
-                <option value="">Selecione</option>
-                <option>Ana</option><option>Cris</option><option>Eder</option><option>Mara</option>
-                <option>Marilia</option><option>Pamela</option><option>Rafaela</option><option>Matheus</option>
-              </select>
+              <select id="config-reset-user"><!-- populado dinamicamente --></select>
             </div>
             <button class="btn btn-danger" onclick="resetarSenha()">Redefinir para 1234</button>
           </div>
           <div id="config-reset-msg" style="margin-top:10px;font-size:12px;display:none"></div>
         </div>
+
       </div>
 
     </div>
@@ -710,7 +723,8 @@ function gerarId(prefix=''){
 }
 
 // ── AUTENTICAÇÃO ─────────────────────────────────────────────────────────────
-const VENDEDORES=['Ana','Cris','Eder','Mara','Marilia','Pamela','Rafaela','Matheus','Gerencial'];
+const VENDEDORES_DEFAULT=['Ana','Flavia','Mara','Marilia','Pamela','Rafaela','Matheus','Gerencial'];
+let VENDEDORES=[...VENDEDORES_DEFAULT]; // pode ser sobrescrito pelo Sheets
 const CIDADES_BR={"AC":["ACRELÂNDIA","ASSIS BRASIL","BRASILÉIA","BUJARI","CAPIXABA","CRUZEIRO DO SUL","EPITACIOLÂNDIA","FEIJÓ","JORDÃO","MÂNCIO LIMA","MANOEL URBANO","MARECHAL THAUMATURGO","PLÁCIDO DE CASTRO","PORTO ACRE","PORTO WALTER","RIO BRANCO","RODRIGUES ALVES","SANTA ROSA DO PURUS","SENA MADUREIRA","SENADOR GUIOMARD","TARAUACÁ","XAPURI"],"AL":["ÁGUA BRANCA","ANADIA","ARAPIRACA","ATALAIA","BATALHA","BELÉM","BOM CONSELHO","BOM SUCESSO","BOQUEIRÃO","BRANQUINHA","CACIMBINHAS","CAJUEIRO","CAMPESTRE","CAMPO ALEGRE","CAMPO GRANDE","CANAPI","CAPELA","CARNEIROS","CHÃ PRETA","COITÉ DO NÓIA","COLÔNIA LEOPOLDINA","COQUEIRO SECO","CORURIPE","CRAÍBAS","DELMIRO GOUVEIA","DOIS RIACHOS","ESTRELA DE ALAGOAS","FEIRA GRANDE","FELIZ DESERTO","FLEXEIRAS","GIRAU DO PONCIANO","IBATEGUARA","IGACI","Igreja NOVA","INHAPI","JACARÉ DOS HOMENS","JACUÍPE","JAPARATINGA","JARAMATAIA","JEQUIÁ DA PRAIA","JOAQUIM GOMES","JUNDIÁ","JUNQUEIRO","LAGOA DA CANOA","LIMOEIRO DE ANADIA","MACEIÓ","MAJOR ISIDORO","MAR VERMELHO","MARAGOGI","MARAVILHA","MARECHAL DEODORO","MARIBONDO","MATA GRANDE","MATRIZ DE CAMARAGIBE","MESSIAS","MINADOR DO NEGRÃO","MONTEIRÓPOLIS","MURICI","NOVO LINO","OLHO D`ÁGUA DAS FLORES","OLHO D`ÁGUA DO CASADO","OLHO D`ÁGUA GRANDE","OLIVENÇA","OURO BRANCO","PALESTINA","PALMEIRA DOS ÍNDIOS","PÃO DE AÇÚCAR","PARICONHA","PARIPUEIRA","PASSO DE CAMARAGIBE","PAULO JACINTO","PENEDO","PIAÇABUÇU","PILAR","PINDOBA","PIRANHAS","POÇO DAS TRINCHEIRAS","PORTO CALVO","PORTO DE PEDRAS","PORTO REAL DO COLÉGIO","QUEBRANGULO","RIO LARGO","ROTEIRO","SANTA LUZIA DO NORTE","SANTANA DO IPANEMA","SANTANA DO MUNDAÚ","SÃO BRÁS","SÃO JOSÉ DA LAJE","SÃO JOSÉ DA TAPERA","SÃO LUÍS DO QUITUNDE","SÃO MIGUEL DOS CAMPOS","SÃO MIGUEL DOS MILAGRES","SÃO SEBASTIÃO","SATUBA","SENADOR RUI PALMEIRA","TANQUE D`ARCA","TAQUARANA","TEOTÔNIO VILELA","TRAIPU","UNIÃO DOS PALMARES","VIÇOSA"],"AM":["MANAUS","PARINTINS","ITACOATIARA","MANACAPURU","COARI","TEFÉ","TABATINGA","MAUÉS","HUMAITÁ","SANTA ISABEL DO RIO NEGRO","BARCELOS","MANICORÉ","BORBA","NOVA OLINDA DO NORTE","URUCURITUBA","CAREIRO","URUCARÁ","IRANDUBA","LÁBREA","SÃO GABRIEL DA CACHOEIRA"],"AP":["MACAPÁ","SANTANA","OIAPOQUE","LARANJAL DO JARI","MAZAGÃO","PORTO GRANDE","FERREIRA GOMES","AMAPÁ","TARTARUGALZINHO","VITÓRIA DO JARI"],"BA":["SALVADOR","FEIRA DE SANTANA","VITÓRIA DA CONQUISTA","CAMAÇARI","JUAZEIRO","ILHÉUS","LAURO DE FREITAS","BARREIRAS","JEQUIÉ","TEIXEIRA DE FREITAS","ALAGOINHAS","PORTO SEGURO","SIMÕES FILHO","PAULO AFONSO","EUNÁPOLIS","SANTO ANTÔNIO DE JESUS","CANDEIAS","GUANAMBI","ITABUNA","JACOBINA","SERRINHA","VALENÇA","LUÍS EDUARDO MAGALHÃES"],"CE":["FORTALEZA","CAUCAIA","JUAZEIRO DO NORTE","MARACANAÚ","SOBRAL","CRATO","ITAPIPOCA","MARANGUAPE","IGUATU","QUIXADÁ","CANINDÉ","AQUIRAZ","PACATUBA","CRATEÚS","TIANGUÁ","CASCAVEL","RUSSAS","HORIZONTE","CAMOCIM","ARACATI"],"DF":["BRASÍLIA","CEILÂNDIA","TAGUATINGA","SAMAMBAIA","SOBRADINHO","PLANALTINA","GAMA","ÁGUAS CLARAS","RECANTO DAS EMAS","SANTA MARIA","SÃO SEBASTIÃO","GUARÁ","NÚCLEO BANDEIRANTE","LAGO NORTE","LAGO SUL","VICENTE PIRES","PARANOÁ","RIACHO FUNDO"],"ES":["VITÓRIA","SERRA","VILA VELHA","CARIACICA","CACHOEIRO DE ITAPEMIRIM","LINHARES","COLATINA","GUARAPARI","SÃO MATEUS","ARACRUZ","VIANA","NOVA VENÉCIA","BARRA DE SÃO FRANCISCO","JOÃO NEIVA","AFONSO CLÁUDIO","ITAPEMIRIM","MARATAÍZES","PIÚMA","ICONHA","ANCHIETA"],"GO":["GOIÂNIA","APARECIDA DE GOIÂNIA","ANÁPOLIS","RIO VERDE","LUZIÂNIA","ÁGUAS LINDAS DE GOIÁS","VALPARAÍSO DE GOIÁS","TRINDADE","FORMOSA","NOVO GAMA","ITUMBIARA","SENADOR CANEDO","CATALÃO","JATAÍ","PLANALTINA","CALDAS NOVAS","GOIANÉSIA","MINEIROS","QUIRINÓPOLIS","CERES"],"MA":["SÃO LUÍS","IMPERATRIZ","TIMON","CAXIAS","CODÓ","PAÇO DO LUMIAR","AÇAILÂNDIA","BACABAL","BALSAS","SANTA INÊS","PINHEIRO","CHAPADINHA","SÃO JOSÉ DE RIBAMAR","COROATÁ","VIANA","PEDREIRAS","PRESIDENTE DUTRA","GRAJAÚ","BARRA DO CORDA","ITAPECURU MIRIM"],"MG":["ALBERTINA","ALFENAS","ALMENARA","ALPINOPOLIS","ALTEROSA","ANDRADAS","ARAGUARI","ARAXÁ","ARCEBURGO","AREADO","BANDEIRA DO SUL","BARBACENA","BELO HORIZONTE","BETIM","BOA ESPERANCA","BOCAINA DE MINAS","BOM JESUS DA PENHA","BOM REPOLSO","BORDA DA MATA","BOTELHOS","BRAZOPOLIS","BUENO BRANDAO","BUENO BRANDÃO","CABO VERDE","CALDAS","CAMANDUCAIA","CAMBUÍ","CAMPESTRE","CAMPO BELO","CAMPOS GERAIS","CAPITOLIO","CARATINGA","CARMO DA CACHOEIRA","CATAGUASES","CAXAMBU","CONCEIÇÃO DOS OUROS","CONGONHAL","CONSELHEIRO LAFAIETE","CONTAGEM","CORONEL FABRICIANO","CRISTINA","CURVELO","DELFIM MOREIRA","DIVINÓPOLIS","DIVISA NOVA","ELOI MENDES","EXTREMA","FORMIGA","FRUTAL","GONÇALVES","GOVERNADOR VALADARES","GUARANESIA","GUAXUPE","GUAXUPÉ","HELIODORA","IBIRITÉ","IBITIARA DE MINAS","IBITIURA DE MINAS","IBITURA DE MINAS","INCONFIDENTES","IPATINGA","IPUIUNA","IPUIÚNA","ITABIRA","ITAJUBA","ITAJUBÁ","ITAMONTE","ITAPEVA","ITAÚNA","ITUIUTABA","JACUTINGA","JACUÍ","JUIZ DE FORA","JURUAIA","LAMBARI","LAVRAS","MACHADO","MARIA DA FÉ","MONTE BELO","MONTE SANTO DE MINAS","MONTE SIAO","MONTES CLAROS","MUNHOZ","MURIAÉ","MUZAMBINHO","NATÉRCIA","NOVA LIMA","NOVA RESENDE","OURO FINO","OURO PRETO","PARAGUAÇU","PARAISOPOLIS","PARÁ DE MINAS","PASSA QUATRO","PASSOS","PATOS DE MINAS","PEDRALVA","PIRANGUINHO","POAOS DE CALDAS","POCO FUNDO","POCOS DE CALDAS","POUSO ALEGRE","POÇOS DE CALDAS","PO�O FUNDO","PO�OS CALDAS","PO�OS DE CALDAS","RIBEIRÃO DAS NEVES","SABARÁ","SANTA LUZIA","SANTA RITA DE CALDAS","SANTA RITA DO SAPUCAI","SANTA RITA DO SAPUCAÍ","SAO GONCALO DO SAPUCAI","SAO JOSE DO ALEGRE","SAO PEDRO DA UNIAO","SAO PEDRO DE CALDAS","SAO SEBASTIAO DA BELA VISTA","SAO SEBASTIAO DO PARAISO","SENADOR JOSÉ BENTO","SERRANIA","SETE LAGOAS","SILVIANOPOLIS","SOLEDADE DE MINAS","STA RIA SAPUCAI","SÃO GONÇALO DO SAPUCAÍ","SÃO JOÃO DEL REI","SÃO LOURENÇO","SÃO SEBASTIÃO DO PARAÍSO","S�O SEBASTI�O DA BELA VISTA","TEÓFILO OTONI","TIMÓTEO","TRES CORACOES","TRES PONTAS","TRÊS CORAÇÕES","TRÊS PONTAS","UBERABA","UBERLÂNDIA","UBÁ","VARGINHA","VESPASIANO","VIÇOSA","WENCESLAU BRAZ"],"MS":["CAMPO GRANDE","DOURADOS","TRÊS LAGOAS","CORUMBÁ","PONTA PORÃ","NAVIRAÍ","NOVA ANDRADINA","AQUIDAUANA","SIDROLÂNDIA","PARANAÍBA","COXIM","MARACAJU","SÃO GABRIEL DO OESTE","AMAMBAI","RIO BRILHANTE","COSTA RICA","JARDIM","ANASTÁCIO","BONITO","MIRANDA"],"MT":["CUIABÁ","VÁRZEA GRANDE","RONDONÓPOLIS","SINOP","TANGARÁ DA SERRA","CÁCERES","SORRISO","LUCAS DO RIO VERDE","PRIMAVERA DO LESTE","BARRA DO GARÇAS","ALTA FLORESTA","GUARANTÃ DO NORTE","NOVA MUTUM","COLÍDER","JUÍNA","DIAMANTINO","PONTES E LACERDA","PEIXOTO DE AZEVEDO","CONFRESA","MATUPÁ"],"PA":["BELÉM","ANANINDEUA","SANTARÉM","MARABÁ","CASTANHAL","PARAUAPEBAS","ABAETETUBA","CAMETÁ","BRAGANÇA","ALTAMIRA","TUCURUÍ","BARCARENA","PARAGOMINAS","MARITUBA","REDENÇÃO","ITAITUBA","TOMÉ-AÇU","MOJU","CAPANEMA","BREVES"],"PB":["JOÃO PESSOA","CAMPINA GRANDE","SANTA RITA","PATOS","BAYEUX","SOUSA","CAJAZEIRAS","CABEDELO","GUARABIRA","SAPÉ","MAMANGUAPE","QUEIMADAS","ESPERANÇA","MONTEIRO","CATOLÉ DO ROCHA","POMBAL","ITABAIANA","ALAGOINHA","LAGOA SECA","INGÁ"],"PE":["RECIFE","CARUARU","OLINDA","JABOATÃO DOS GUARARAPES","PETROLINA","PAULISTA","GARANHUNS","CAMAÇARI","VITÓRIA DE SANTO ANTÃO","CABO DE SANTO AGOSTINHO","SANTA CRUZ DO CAPIBARIBE","IPOJUCA","ARARIPINA","BELO JARDIM","SURUBIM","SALGUEIRO","CAMARAGIBE","GOIANA","ARCOVERDE","SÃO LOURENÇO DA MATA"],"PI":["TERESINA","PARNAÍBA","PICOS","PIRIPIRI","FLORIANO","CAMPO MAIOR","BARRAS","CAXINGÓ","ESPERANTINA","SÃO RAIMUNDO NONATO","URUÇUÍ","OEIRAS","VALENÇA DO PIAUÍ","BATALHA","PEDRO II","CORRENTE","LUÍS CORREIA","BRASILEIRA","BOM JESUS","FRONTEIRAS"],"PR":["ALMIRANTE TAMANDARÉ","APUCARANA","ARAPONGAS","ARAUCÁRIA","CAMBÉ","CAMPO LARGO","CAMPO MOURÃO","CASCAVEL","CIANORTE","COLOMBO","CURITIBA","FAZENDA RIO GRANDE","FOZ DO IGUAÇU","FRANCISCO BELTRÃO","GUARAPUAVA","LONDRINA","MARECHAL CÂNDIDO RONDON","MARINGÁ","PALMAS","PARANAGUÁ","PARANAVAÍ","PATO BRANCO","PINHAIS","PIRAQUARA","PONTA GROSSA","SARANDI","SERTANOPOLIS","SÃO JOSÉ DOS PINHAIS","TELÊMACO BORBA","TOLEDO","UMUARAMA"],"RJ":["RIO DE JANEIRO","SÃO GONÇALO","DUQUE DE CAXIAS","NOVA IGUAÇU","NITERÓI","BELFORD ROXO","CAMPOS DOS GOYTACAZES","SÃO JOÃO DE MERITI","PETRÓPOLIS","VOLTA REDONDA","MACAÉ","ITABORAÍ","MAGÉ","NOVA FRIBURGO","BARRA MANSA","ANGRA DOS REIS","QUEIMADOS","NILÓPOLIS","RESENDE","TERESÓPOLIS","CABO FRIO","MESQUITA","MARICÁ","ITAGUAÍ","ARARUAMA"],"RN":["NATAL","MOSSORÓ","PARNAMIRIM","SÃO GONÇALO DO AMARANTE","MACAÍBA","CEARÁ-MIRIM","CAICÓ","ASSU","CURRAIS NOVOS","SANTA CRUZ","NOVA CRUZ","SÃO JOSÉ DE MIPIBU","EXTREMOZ","ANGICOS","APODI","PAU DOS FERROS","TOUROS","AREIA BRANCA","CANGUARETAMA","GUAMARÉ"],"RO":["PORTO VELHO","JI-PARANÁ","ARIQUEMES","VILHENA","CACOAL","ROLIM DE MOURA","JARU","GUAJARÁ-MIRIM","OURO PRETO DO OESTE","ESPIGÃO D`OESTE","PIMENTA BUENO","PRESIDENTE MÉDICI","COLORADO DO OESTE","BURITIS","NOVA MAMORÉ","CEREJEIRAS","ALTA FLORESTA D`OESTE","ALVORADA D`OESTE","MACHADINHO D`OESTE","SÃO FRANCISCO DO GUAPORÉ"],"RR":["BOA VISTA","RORAINÓPOLIS","CARACARAÍ","ALTO ALEGRE","MUCAJAÍ","CANTÁ","IRACEMA","CAROEBE","SÃO JOÃO DA BALIZA","SÃO LUIZ","AMAJARI","BONFIM","NORMANDIA","PACARAIMA","UIRAMUTÃ","VILA DO BONFIM"],"RS":["ALEGRETE","ALVORADA","BAGÉ","BENTO GONÇALVES","CACHOEIRA DO SUL","CACHOEIRINHA","CANOAS","CAXIAS DO SUL","CHARQUEADAS","ERECHIM","FARROUPILHA","FREDERICO WESTPHALEN","GRAVATAÍ","GUAÍBA","IJUÍ","LAJEADO","NOVO HAMBURGO","PASSO FUNDO","PELOTAS","PORTO ALEGRE","RIO GRANDE","SANTA CRUZ DO SUL","SANTA MARIA","SANTA ROSA","SAPIRANGA","SAPUCAIA DO SUL","SÃO LEOPOLDO","URUGUAIANA","VACARIA","VIAMÃO"],"SC":["BALNEÁRIO CAMBORIÚ","BLUMENAU","BRUSQUE","CAMBORIÚ","CANOINHAS","CAÇADOR","CHAPECÓ","CONCÓRDIA","CRICIÚMA","FLORIANÓPOLIS","GASPAR","INDAIAL","ITAJAÍ","IÇARA","JARAGUÁ DO SUL","JOINVILLE","LAGES","MAFRA","NAVEGANTES","PALHOÇA","RIO DO SUL","SALETE","SÃO BENTO DO SUL","SÃO JOSÉ","TUBARÃO","VIDEIRA"],"SE":["ARACAJU","NOSSA SENHORA DO SOCORRO","LAGARTO","ITABAIANA","CARUARU","SÃO CRISTÓVÃO","ESTÂNCIA","TOBIAS BARRETO","SIMÃO DIAS","PROPRIÁ","ITAPORANGA D`AJUDA","BARRA DOS COQUEIROS","ITABAIANINHA","POÇO REDONDO","MOITA BONITA","AQUIDABÃ","RIBEIRÓPOLIS","CARIRA","NOSSA SENHORA DA GLÓRIA","MARUIM"],"SP":["AGUA VERMELHA","AGUAI","AGUAS DA PRATA","AGUAS DE LINDOIA","AGUA�","AGUDOS","ALBERTINA","ALPIN�POLIS","ALUMINIO","AMERICANA","AMERICO BRASILIENSE","AMPARO","AMÉRICO BRASILIENSE","ANALANDIA","ANDRADAS","ANDRADINA","ARACOIABA DA SERRA","ARARAQUARA","ARARAS","ARAÇATUBA","ARCEBURGO","ARTUR NOGUEIRA","ASSIS","ATIBAIA","AVANHANDAVA","AVAÍ","BARIRI","BARRETOS","BARUERI","BAURU","BEBEDOURO","BIRIGUI","BOCAINA","BOFETE","BOITUVA","BOM JESUS DOS PERDOES","BORDA DA MATA","BOTELHOS","BOTUCATU","BRAGANAA PAULISTA","BRAGANCA PAULISTA","BRAGANÇA PAULISTA","BURITAMA","CABO VERDE","CABREUVA","CABRÁLIA PAULISTA","CACONDE","CAMPINAS","CAMPO LIMPO PAULISTA","CAPELA DO ALTO","CAPIVARI","CARAPICUIBA","CARAPICUÍBA","CASA BRANCA","CATANDUVA","CERQUILHO","CESARIO LANGE","COLOMBIA","CONCHAL","CORDEIROPOLIS","CORUMBATAI","COSMOPOLIS","COSMÓPOLIS","COTIA","CRIS�LIA","DESCALVADO","DIADEMA","DIVINOLANDIA","DIVINOL�NDIA","DUARTINA","E.S. DO PINHAL","ELIAS FAUSTO","ELIAS GAUSTO","EMBU DAS ARTES","ENGENHEIRO COELHO","ESPIRITO SANTO DO PINHAL","ESTIVA GERBI","EXTREMA","FERNÃO","FERRAZ DE VASCONCELOS","FRANCA","FRANCO DA ROCHA","GABRIEL MONTEIRO","GARÇA","GETULINA","GUAIMBÊ","GUAIÇARA","GUARUJÁ","GUARULHOS","HOLAMBRA","HORTOLANDIA","HORTOLÂNDIA","IARAS","IBATE","IBATÉ","IBAT�","IBITIURA DE MINAS","IBIUNA","IBI�NA","INCONFIDENTES","INDAIATUBA","IPERO","IPEUNA","IRACEMAPOLIS","ITAJU","ITAPETININGA","ITAPEVA","ITAPEVI","ITAPIRA","ITAQUAQUECETUBA","ITATIBA","ITATINGA","ITIRAPINA","ITOBI","ITU","ITUPEVA","ITUVERAVA","ITÁPOLIS","JABOTICABAL","JACARE (CABREUVA)","JACAREÍ","JACUTINGA","JAGUARIUNA","JAGUARIÚNA","JAGUARI�NA","JARDIM","JAÚ","JUNDIAI","JUNDIAÍ","LARANJAL PAULISTA","LAVÍNIA","LEME","LENÇÓIS PAULISTA","LIEMIRA","LIMEIRA","LINDOIA","LINS","LOUVEIRA","LUIZIÂNIA","MACATUBA","MAIRINQUE","MAIRIPORA","MARÍLIA","MATAO","MAT�O","MAUÁ","MIRANDÓPOLIS","MOCOCA","MOGI DAS CRUZES","MOGI GUAAU","MOGI GUACU","MOGI GUAÇU","MOGI GUA�U","MOGI MIRIM","MOGI-MIRIM","MOJI MIRIM","MONTE ALEGRE DO SUL","MONTE MOR","MORUNGABA","NAZARÉ PAULISTA","NOVA LUZITÂNIA","NOVA ODESSA","OLIMPIA","OSASCO","OSVALDO CRUZ","OURINHOS","OURO FINO","PAULINIA","PAULNIA","PAULÍNIA","PEDERNEIRAS","PEDRA BELA","PEDREIRA","PENÁPOLIS","PEREIRAS","PIEDADE","PINHAL","PINHALZINHO","PIRACAIA","PIRACICABA","PIRAJU","PIRAJUÍ","PIRASSUNUNGA","PIRATININGA","POAOS DE CALDAS","PORTO FELIZ","PORTO FERREIRA","PORTOFERREIRA","PRAIA GRANDE","PRATÂNIA","PRESIDENTE ALVES","PRESIDENTE EPITÁCIO","PRESIDENTE PRUDENTE","PROMISSÃO","REGINÓPOLIS","RIBEIRAO PRETO","RIBEIRÃO BONITO","RIBEIRÃO PIRES","RIBEIRÃO PRETO","RIO CLARO","RIO DAS PEDRAS","RIO GRANDE DA SERRA","SA0 JOAO DA BOA VISTA","SALTO","SALTO DE PIRAPORA","SANTA BARABARA DO OESTE","SANTA BARBARA DAOESTE","SANTA BARBARA DOESTE","SANTA BARBARA D\\'OESTE","SANTA BÁRBARA D`OESTE","SANTA CEUZ DAS PALMEIRAS","SANTA CRUZ DA CONCEICAO","SANTA CRUZ DAS PALMEIRAS","SANTA GERTRUDES","SANTA RITA DO PASSA QUATRO","SANTA ROSA DE VITERBO","SANTANA DE PARNAIBA","SANTO ANDRÉ","SANTO ANTONIO DE POSSE","SANTO ANTONIO DO JARDIM","SANTOS","SAO CAETANO DO SUL","SAO CARLOS","SAO JOAO DA BOA VISATA","SAO JOAO DA BOA VISTA","SAO JOAO DA BOA VITSA","SAO JOAOA DA BOA VISTA","SAO JOSA DO RIO PARDO","SAO JOSE DA BELA VISTA","SAO JOSE DO RIO PARDO","SAO JOSE DOS CAMPOS","SAO PAULO","SAO PEDRO","SAO ROQUE","SAO SEBASTIAO DA GRAMA","SAO SIMAO","SERRA NEGRA","SERTÃOZINHO","SOCORRO","SOROCABA","STO A. DE POSSE","SUMARE","SUMARÉ","SUZANO","SÃO BERNARDO DO CAMPO","SÃO CAETANO DO SUL","SÃO CARLOS","SÃO JOSÉ DO RIO PRETO","SÃO JOSÉ DOS CAMPOS","SÃO JOÃO DA BOA VISTA","SÃO MANUEL","SÃO PAULO","SÃO ROQUE","SÃO VICENTE","São CARLOS","S�O CARLOS","S�O JOSE DO RIO PARDO","S�O JOSE RIO PARDO","S�O JO�O DA BOA VISTA","S�O PAULO","S�O PEDRO","S�O SEBASTI�O DA GRAMA","TABOÃO DA SERRA","TAMBAU","TAPIRATIBA","TATUI","TAUBATE","TAUBATÉ","TIETE","TIETÊ","TRÊS LAGOAS","TUPA","TUPÃ","VALINHOS","VALPARAÍSO","VARGEM","VARGEM GRANDE DO SUL","VARGEM GRANDE PAULISTA","VARZEA PAULISTA","VINHEDO","VOLTA REDONDA","VOTORANTIM","VOTUPORANGA","ZACARIAS"],"TO":["ALVORADA","ARAGUATINS","ARAGUAÍNA","ARRAIAS","COLINAS DO TOCANTINS","CONCEIÇÃO DO TOCANTINS","CRISTALÂNDIA","DIANÓPOLIS","FORMOSO DO ARAGUAIA","GUARAÍ","GURUPI","LAGOA DA CONFUSÃO","MIRACEMA DO TOCANTINS","NATIVIDADE","NOVO ACORDO","PALMAS","PARAÍSO DO TOCANTINS","PEDRO AFONSO","PORTO NACIONAL","TOCANTINÓPOLIS"]};
 const GERENTES=['Marcelo','Matheus','Gerencial'];
 let usuarioAtual=null;
@@ -861,6 +875,13 @@ async function syncAll(){
     const idsSheets=new Set(agSheets.map(a=>String(a.id)));
     const soLocal=agLocal.filter(a=>!idsSheets.has(String(a.id)));
     db.agendamentos=[...agSheets,...soLocal];
+    // Carregar lista de vendedores do Sheets (aba config, chave 'vendedores')
+    try{
+      const vRes=await api({action:'getVendedores'});
+      if(vRes&&Array.isArray(vRes.vendedores)&&vRes.vendedores.length>0){
+        VENDEDORES=vRes.vendedores;
+      }
+    }catch(e){}
     poblarSelects();renderMsItems();renderClientes();renderDash();renderRanking();renderAgenda();
     setSyncStatus('atualizado '+new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}),true);
     toast('Dados sincronizados!','ok');
@@ -1030,16 +1051,43 @@ function toast(msg,type='ok'){
 
 function poblarSelects(){
   const vs=getVendedores();
+  const optsVend = vs.map(v=>`<option value="${v}">${v}</option>`).join('');
+
+  // Selects de filtro/dashboard (mantém valor atual)
   ['fil-vend','dash-vend','ag-fil-vend'].forEach(id=>{
     const el=document.getElementById(id);if(!el)return;
     const val=el.value;
-    const first=id==='dash-vend'?'<option value="">Toda a equipe</option>':id==='ag-fil-vend'?'<option value="">Todos vendedores</option>':'<option value="">Todos vendedores</option>';
-    el.innerHTML=first+vs.map(v=>`<option value="${v}">${v}</option>`).join('');
+    const first=id==='dash-vend'?'<option value="">Toda a equipe</option>':'<option value="">Todos vendedores</option>';
+    el.innerHTML=first+optsVend;
     el.value=val;
-    // vendedor filtro: se não é gerente, lock no próprio
     if(id==='fil-vend'&&!PODE_VER_TODOS.includes(usuarioAtual)){el.value=usuarioAtual;el.disabled=true;}
     else if(id==='fil-vend'){el.disabled=false;}
   });
+
+  // Selects de formulário (modais e cadastro) — mantém valor selecionado
+  ['ml-vendedor','e-vend','ag-vend','c-vend'].forEach(id=>{
+    const el=document.getElementById(id);if(!el)return;
+    const val=el.value;
+    el.innerHTML='<option value="">Selecione</option>'+optsVend;
+    if(val) el.value=val;
+  });
+
+  // Select de reset de senha em configurações
+  const rst=document.getElementById('config-reset-user');
+  if(rst){
+    const val=rst.value;
+    rst.innerHTML='<option value="">Selecione</option>'+optsVend;
+    if(val) rst.value=val;
+  }
+
+  // Select de login — inclui Marcelo e Gerencial
+  const loginSel=document.getElementById('login-user');
+  if(loginSel){
+    const loginVal=loginSel.value;
+    loginSel.innerHTML='<option value="">Selecione seu nome</option>'
+      +VENDEDORES.map(v=>`<option value="${v}">${v}</option>`).join('');
+    if(loginVal) loginSel.value=loginVal;
+  }
 }
 
 // ── MULTI-SELECT CIDADE ───────────────────────────────────────────────────────
@@ -1926,7 +1974,7 @@ function baixarModelo(){
   // Colunas espelhando exatamente a base de dados (mesma ordem do Sheets)
   const header='id,nome,telefone,endereco,bairro,cidade,uf,vendedor,obs,dataCadastro';
   const ex1=',(DEIXE VAZIO - gerado automatico),Nome completo do cliente,(35) 99999-0001,Rua das Flores 100,Centro,Pouso Alegre,MG,Ana,Observações sobre o cliente,15/04/2026';
-  const ex2=',(DEIXE VAZIO - gerado automatico),Empresa ABC Ltda,(11) 98888-0002,Av. Paulista 500,Bela Vista,São Paulo,SP,Cris,,';
+  const ex2=',(DEIXE VAZIO - gerado automatico),Empresa ABC Ltda,(11) 98888-0002,Av. Paulista 500,Bela Vista,São Paulo,SP,Flavia,,';
   const ex3=',(DEIXE VAZIO - gerado automatico),João da Silva,(35) 97777-0003,,,Itajubá,MG,Mara,,';
   const descRow='# INSTRUÇÕES: id deixe vazio (preenchido automaticamente). Campos obrigatórios: nome. Demais são opcionais.';
   const csv=[header,descRow,ex1,ex2,ex3].join('\n');
@@ -1979,6 +2027,74 @@ function temPermissao(funcaoId){
   const p=getPermissoes();
   // Se não configurado, padrão é HABILITADO
   return p[usuarioAtual]?.[funcaoId]!==false;
+}
+
+// ── GERENCIAR VENDEDORES ─────────────────────────────────────────────────────
+const GERENTES_FIXOS=['Marcelo','Matheus','Gerencial']; // nunca aparecem como vendedores editáveis
+
+function renderVendedoresConfig(){
+  const el=document.getElementById('config-vend-lista');
+  if(!el)return;
+  const vendedores=VENDEDORES.filter(v=>!GERENTES_FIXOS.includes(v)&&v!=='Gerencial');
+  if(!vendedores.length){
+    el.innerHTML='<p class="empty" style="padding:8px 0">Nenhum vendedor cadastrado.</p>';
+    return;
+  }
+  el.innerHTML=vendedores.map(v=>`
+    <div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border)">
+      <div style="width:32px;height:32px;border-radius:50%;background:var(--orange-dim);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--orange);flex-shrink:0">${v[0].toUpperCase()}</div>
+      <span style="flex:1;font-size:13px;font-weight:500">${v}</span>
+      <button class="btn btn-sm btn-danger" onclick="removerVendedor('${v}')">✕ Remover</button>
+    </div>`).join('');
+}
+
+async function adicionarVendedor(){
+  const input=document.getElementById('config-novo-vend');
+  const msg=document.getElementById('config-vend-msg');
+  const nome=(input.value||'').trim();
+  if(!nome){toast('Informe o nome do vendedor.','err');return;}
+  // Capitalizar primeira letra de cada palavra
+  const nomeFormatado=nome.split(' ').map(p=>p.charAt(0).toUpperCase()+p.slice(1).toLowerCase()).join(' ');
+  if(VENDEDORES.includes(nomeFormatado)){
+    msg.style.display='block';msg.style.color='var(--amber)';
+    msg.textContent=`"${nomeFormatado}" já está na lista.`;return;
+  }
+  if(GERENTES_FIXOS.includes(nomeFormatado)){
+    msg.style.display='block';msg.style.color='var(--red)';
+    msg.textContent='Este nome é reservado para gerentes.';return;
+  }
+  // Inserir antes dos gerentes no final da lista
+  const idxGerencial=VENDEDORES.indexOf('Gerencial');
+  if(idxGerencial>=0) VENDEDORES.splice(idxGerencial,0,nomeFormatado);
+  else VENDEDORES.push(nomeFormatado);
+
+  input.value='';
+  try{
+    // Salvar lista e criar usuário no Sheets
+    await api({action:'salvarVendedores',vendedores:VENDEDORES});
+    await api({action:'adicionarUsuario',usuario:nomeFormatado,senha:'1234'});
+    msg.style.display='block';msg.style.color='var(--green)';
+    msg.textContent=`✓ "${nomeFormatado}" adicionado com senha padrão 1234.`;
+    toast(`${nomeFormatado} adicionado!`,'ok');
+  }catch(e){
+    msg.style.display='block';msg.style.color='var(--amber)';
+    msg.textContent='Adicionado localmente. Erro ao sincronizar com o servidor.';
+  }
+  poblarSelects();renderVendedoresConfig();renderConfigPermissoes();
+  setTimeout(()=>msg.style.display='none',4000);
+}
+
+async function removerVendedor(nome){
+  if(!confirm(`Remover "${nome}" da equipe? O acesso de login também será desativado.`))return;
+  VENDEDORES=VENDEDORES.filter(v=>v!==nome);
+  try{
+    await api({action:'salvarVendedores',vendedores:VENDEDORES});
+    await api({action:'desativarUsuario',usuario:nome});
+    toast(`${nome} removido.`,'ok');
+  }catch(e){
+    toast('Removido localmente. Erro ao sincronizar.','err');
+  }
+  poblarSelects();renderVendedoresConfig();renderConfigPermissoes();
 }
 
 function renderConfigPermissoes(){
@@ -2046,7 +2162,7 @@ function showScreen(id,el){
   if(id==='dash')renderDash();
   if(id==='gestor')renderRanking();
   if(id==='agenda')renderAgenda();
-  if(id==='config')renderConfigPermissoes();
+  if(id==='config'){renderVendedoresConfig();renderConfigPermissoes();}
 }
 
 // Pedir permissão de notificação ao carregar
