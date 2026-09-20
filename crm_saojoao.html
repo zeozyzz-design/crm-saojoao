@@ -247,9 +247,8 @@ label:first-child{margin-top:0}
     <div class="login-err" id="login-err"></div>
     <div id="login-form">
       <label style="margin-top:0">Usuário</label>
-      <select id="login-user">
-        <option value="">Selecione seu nome</option>
-      </select>
+      <input id="login-user" list="login-user-list" autocomplete="off" placeholder="Digite ou selecione seu nome">
+      <datalist id="login-user-list"></datalist>
       <label>Senha</label>
       <input type="password" id="login-pwd" maxlength="4" placeholder="••••" oninput="this.value=this.value.replace(/\D/g,'').slice(0,4)">
       <button class="btn btn-primary" style="width:100%;margin-top:16px;justify-content:center" onclick="fazerLogin()">Entrar</button>
@@ -713,11 +712,9 @@ async function carregarUsuarios(){
 }
 
 function popularLoginSelect(){
-  const sel=document.getElementById('login-user');
-  if(!sel)return;
-  const val=sel.value;
-  sel.innerHTML='<option value="">Selecione seu nome</option>'+VENDEDORES.map(v=>`<option>${v}</option>`).join('');
-  sel.value=val;
+  const dl=document.getElementById('login-user-list');
+  if(!dl)return;
+  dl.innerHTML=VENDEDORES.map(v=>`<option value="${v}"></option>`).join('');
 }
 
 // ── AUTENTICAÇÃO VIA SHEETS ──────────────────────────────────────────────────
@@ -963,7 +960,16 @@ function parseAgData(rawData, rawHora){
 }
 
 function iniciais(n){return n.split(' ').slice(0,2).map(p=>p[0]).join('').toUpperCase();}
-function getVendedores(){return VENDEDORES.filter(v=>v!=='Gerencial');}
+// CORRIGIDO: lista de vendedores agora é a UNIÃO de: usuários da planilha (getUsuarios),
+// vendedores que já têm clientes na base, e o usuário logado. Assim, mesmo que o
+// getUsuarios não responda, novos vendedores nunca somem dos seletores.
+function getVendedores(){
+  const set=new Set();
+  VENDEDORES.forEach(v=>{if(v&&v!=='Gerencial')set.add(String(v).trim());});
+  (db.clientes||[]).forEach(c=>{if(c&&c.vendedor)set.add(String(c.vendedor).trim());});
+  if(usuarioAtual&&usuarioAtual!=='Gerencial')set.add(usuarioAtual);
+  return [...set].filter(Boolean).sort((a,b)=>a.localeCompare(b,'pt-BR'));
+}
 function isGerente(){return usuarioAtual&&(GERENTES.includes(usuarioAtual));}
 
 function clientesVisiveis(){
